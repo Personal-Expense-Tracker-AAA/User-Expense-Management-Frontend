@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("expense-form");
   const expenseList = document.getElementById("expense-list");
   const message = document.getElementById("message");
+  const API_URL = "http://localhost:5000"; // Update with your actual backend URL
 
   // Fetch and display expenses on page load
   fetchExpenses();
@@ -21,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const expense = { description, amount: parseFloat(amount), category };
 
     try {
-      const response = await fetch("http://localhost:5000/expenses", {
+      const response = await fetch(`${API_URL}/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(expense),
