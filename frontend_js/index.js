@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Fetch and display expenses & category summary on page load
   fetchExpenses();
+  
+
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -35,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Fetch and update expenses & category summary after adding new expense
       fetchExpenses();
+      fetchTotalExpenses();
 
       form.reset();
     } catch (error) {
@@ -87,6 +90,19 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error fetching category summary:", error);
     }
   }
+
+  // Fetch and display total expenses
+  async function fetchTotalExpenses() {
+    try {
+      const response = await fetch(`${API_URL}/expenses/total`);
+      if (!response.ok) throw new Error("Failed to fetch total expenses");
+      const data = await response.json();
+      document.getElementById("total-amount").textContent = parseFloat(data.total).toFixed(2);
+    } catch (error) {
+      console.error("Error fetching total expenses:", error);
+    }
+  }
+
 
   function addExpenseToTable(expense) {
     const row = document.createElement("tr");
