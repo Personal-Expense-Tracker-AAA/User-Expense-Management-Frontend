@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Fetch and display category-wise totals
+  
   async function fetchCategorySummary() {
     try {
       const response = await fetch(`${API_URL}/expenses/category-summary`);
@@ -67,6 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const categorySummaryTable = document.getElementById("category-summary");
       categorySummaryTable.innerHTML = ""; // Clear previous data
+      const labels = [];
+      const data = [];
 
       categories.forEach((category) => {
         const row = document.createElement("tr");
@@ -74,7 +77,12 @@ document.addEventListener("DOMContentLoaded", () => {
           category.total
         ).toFixed(2)}</td>`;
         categorySummaryTable.appendChild(row);
+
+        labels.push(category.category);
+        data.push(parseFloat(category.total));
       });
+
+      renderCategoryChart(labels, data);
     } catch (error) {
       console.error("Error fetching category summary:", error);
     }
@@ -96,4 +104,35 @@ document.addEventListener("DOMContentLoaded", () => {
     message.classList.remove("d-none");
     setTimeout(() => message.classList.add("d-none"), 3000);
   }
+  let categoryChart; // Define globally
+
+function renderCategoryChart(labels, data) {
+  const ctx = document.getElementById("categoryChart").getContext("2d");
+
+  // Destroy the previous instance of the chart if it exists
+  if (categoryChart) {
+    categoryChart.destroy();
+  }
+
+  // Create the new chart
+  categoryChart = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          data: data,
+          backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0", "#9966ff"],
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+    },
+    
+
+
+  });
+}
+
 });
