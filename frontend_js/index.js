@@ -7,8 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Fetch and display expenses & category summary on page load
   fetchExpenses();
-  
-
+  fetchCategorySummary();
+  fetchTotalExpenses();
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -54,8 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
       expenseList.innerHTML = ""; // Clear current list
       expenses.forEach((expense) => addExpenseToTable(expense));
 
-      // Fetch category-wise summary after updating expenses
-      fetchCategorySummary();
+
     } catch (error) {
       console.error("Error fetching expenses:", error);
     }
