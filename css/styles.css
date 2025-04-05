@@ -7,3 +7,16 @@ body {
 .card {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+#categoryChart {
+  max-width: 250px;
+  height: 250px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  canvas#categoryChart {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
