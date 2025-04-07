@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Fetch and update expenses & category summary after adding new expense
       fetchExpenses();
       fetchTotalExpenses();
+      fetchCategorySummary()
 
       form.reset();
     } catch (error) {
