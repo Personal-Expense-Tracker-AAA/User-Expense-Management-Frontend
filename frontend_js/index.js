@@ -5,6 +5,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const message = document.getElementById("message");
   const API_URL = "http://localhost:5000"; // Update with your actual backend URL
 
+
+  let currentEditId = null;  // To store the ID of the expense being edited
+  
   // Fetch and display expenses & category summary on page load
   fetchExpenses();
   fetchCategorySummary();
@@ -25,6 +28,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const expense = { description, amount: parseFloat(amount), category };
 
     try {
+      if (currentEditId) {
+        // If editing, send PUT request to update the expense
+        const response = await fetch(`${API_URL}/expenses/${currentEditId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(expense),
+        });
+
+        if (!response.ok) throw new Error("Failed to update expense");
+
+        showMessage("Expense updated successfully!", "success");
+      } else {
+        // If adding, send POST request to create a new expense
+
       const response = await fetch(`${API_URL}/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,10 +54,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Fetch and update expenses & category summary after adding new expense
       fetchExpenses();
+      fetchCategorySummary();
       fetchTotalExpenses();
       fetchCategorySummary()
 
       form.reset();
+      currentEditId = null; // Reset the edit ID after adding a new expense
+      }
+    
     } catch (error) {
       showMessage(error.message, "danger");
     }
@@ -113,7 +134,25 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${expense.description}</td>
           <td>${parseFloat(expense.amount).toFixed(2)}</td>
           <td>${expense.category}</td>
+          <td>
+      <button class="btn btn-sm btn-warning edit-btn">Edit</button>
+    </td>
       `;
+
+      //  Attach an event listener to the Edit button
+  const editButton = row.querySelector(".edit-btn");
+  editButton.addEventListener("click", () => {
+    document.getElementById("description").value = expense.description;
+    document.getElementById("amount").value = expense.amount;
+    document.getElementById("category").value = expense.category;
+
+    showMessage("You can now update the details and re-submit.", "info");
+    //  You could add update functionality here in the future.
+    currentEditId = expense.id;  // Store the ID of the expense being edited
+    });
+  
+
+
     expenseList.appendChild(row);
   }
 
@@ -152,6 +191,7 @@ function renderCategoryChart(labels, data) {
 
 
   });
+  
 }
 
 });
