@@ -58,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (error) {
       console.error("Error fetching expenses:", error);
+      showMessage("Failed to load expenses.", "danger"); // Fix #44
     }
   }
 
@@ -88,6 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderCategoryChart(labels, data);
     } catch (error) {
       console.error("Error fetching category summary:", error);
+      showMessage("Failed to load category summary.", "danger"); // Fix #44
     }
   }
 
@@ -100,6 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("total-amount").textContent = parseFloat(data.total).toFixed(2);
     } catch (error) {
       console.error("Error fetching total expenses:", error);
+      showMessage("Failed to load total expenses.", "danger"); // Fix #44
     }
   }
 
