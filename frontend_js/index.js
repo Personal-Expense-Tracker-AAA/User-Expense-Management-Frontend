@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const API_URL = "http://localhost:5000"; // Update with your actual backend URL
 
   let currentEditId = null; // To store the ID of the expense being edited
+  let expenseIdToDelete = null; // to store the ID of the expense to delete
 
   // Fetch and display expenses & category summary on page load
   fetchExpenses();
@@ -137,13 +138,68 @@ document.addEventListener("DOMContentLoaded", () => {
         <button class="btn btn-sm btn-warning edit-btn" data-id="${
           expense.id
         }">Edit</button>
+        <!-- delete button -->
+        <button class="btn btn-sm btn-danger delete-btn" data-id="${expense.id}" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</button>
       </td>
     `;
     expenseList.appendChild(row);
   }
 
+    // Handle delete button clicks
+    expenseList.addEventListener("click", (e) => {
+      if (e.target.classList.contains("edit-btn")) {
+        const expenseId = e.target.dataset.id;
+        const row = e.target.closest("tr");
+        const description = row.children[0].textContent;
+        const amount = row.children[1].textContent;
+        const category = row.children[2].textContent;
+  
+        document.getElementById("edit-description").value = description;
+        document.getElementById("edit-amount").value = amount;
+        document.getElementById("edit-category").value = category;
+  
+        currentEditId = expenseId;
+        const editModal = new bootstrap.Modal(document.getElementById("editModal"));
+        editModal.show();
+      }
+  
+      // delete button handler
+      if (e.target.classList.contains("delete-btn")) {
+        expenseIdToDelete = e.target.dataset.id;
+      }
+    });
+  
+    // confirm delete from modal
+    const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+    if (confirmDeleteBtn) {
+      confirmDeleteBtn.addEventListener("click", async () => {
+        if (!expenseIdToDelete) return;
+  
+        try {
+          const response = await fetch(`${API_URL}/expenses/${expenseIdToDelete}`, {
+            method: "DELETE",
+          });
+  
+          if (!response.ok) throw new Error("Failed to delete expense");
+  
+          showMessage("Expense deleted successfully!", "success");
+          fetchExpenses();
+          fetchCategorySummary();
+          fetchTotalExpenses();
+        } catch (error) {
+          console.error("Error deleting expense:", error);
+          showMessage("Failed to delete expense.", "danger");
+        } finally {
+          expenseIdToDelete = null;
+          const deleteModal = bootstrap.Modal.getInstance(document.getElementById("deleteModal"));
+          deleteModal.hide();
+        }
+      });
+    }
+  
+
   // Delegate clicks on Edit buttons using event delegation
-  expenseList.addEventListener("click", (e) => {
+  /*expenseList.addEventListener("click", (e) => {
     if (e.target.classList.contains("edit-btn")) {
       const expenseId = e.target.dataset.id;
       // Get the row the button is in
@@ -165,13 +221,12 @@ document.addEventListener("DOMContentLoaded", () => {
       editModal.show();
     }
   });
+  */
   // Add edit form submission handler
   editForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const description = document
-      .getElementById("edit-description")
-      .value.trim();
+    const description = document.getElementById("edit-description").value.trim();
     const amount = document.getElementById("edit-amount").value.trim();
     const category = document.getElementById("edit-category").value;
 

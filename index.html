@@ -70,11 +70,7 @@
       </div>
     </div>
 
-
-<canvas id="categoryChart" class="w-100" style="max-width: 250px; height: 250px;"></canvas>
-    </div>
-
-  <!-- Expense Table -->
+    <!-- Expense Table -->
     <div class="card p-3 mt-4">
       <h4>Expense List</h4>
       <table class="table">
@@ -83,48 +79,70 @@
             <th>Description</th>
             <th>Amount (€)</th>
             <th>Category</th>
+            <th>Actions</th> <!-- Added actions column -->
           </tr>
         </thead>
         <tbody id="expense-list"></tbody>
       </table>
     </div>
+
   <!-- Edit Expense Modal -->
 
-<div class="modal fade" id="editModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Edit Expense</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="edit-expense-form">
-          <div class="mb-3">
-            <label for="edit-description" class="form-label">Description:</label>
-            <input type="text" class="form-control" id="edit-description" required>
-          </div>
-          <div class="mb-3">
-            <label for="edit-amount" class="form-label">Amount (€):</label>
-            <input type="number" class="form-control" id="edit-amount" required>
-          </div>
-          <div class="mb-3">
-            <label for="edit-category" class="form-label">Category:</label>
-            <select class="form-select" id="edit-category" required>
-              <option value="Food">Food</option>
-              <option value="Transport">Transport</option>
-              <option value="Shopping">Shopping</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary">Update Expense</button>
-          </div>
-        </form>
+  <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Expense</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="edit-expense-form">
+            <div class="mb-3">
+              <label for="edit-description" class="form-label">Description:</label>
+              <input type="text" class="form-control" id="edit-description" required>
+            </div>
+            <div class="mb-3">
+              <label for="edit-amount" class="form-label">Amount (€):</label>
+              <input type="number" class="form-control" id="edit-amount" required>
+            </div>
+            <div class="mb-3">
+              <label for="edit-category" class="form-label">Category:</label>
+              <select class="form-select" id="edit-category" required>
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Update Expense</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
-</div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this expense?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button id="confirmDeleteBtn" type="button" class="btn btn-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
 
  <!-- Bootstrap JS -->
