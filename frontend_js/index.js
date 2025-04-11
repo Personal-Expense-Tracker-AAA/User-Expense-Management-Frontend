@@ -29,18 +29,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const expense = { description, amount: parseFloat(amount), category };
 
     try {
-      if (currentEditId) {
-        // If editing, send PUT request to update the expense
-        const response = await fetch(`${API_URL}/expenses/${currentEditId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(expense),
-        });
+      //if (currentEditId) {
+      // If editing, send PUT request to update the expense
+      const response = await fetch(`${API_URL}/expenses/${currentEditId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(expense),
+      });
 
-        if (!response.ok) throw new Error("Failed to update expense");
+      if (!response.ok) throw new Error("Failed to update expense");
 
-        showMessage("Expense updated successfully!", "success");
-      } else {
+      showMessage("Expense updated successfully!", "success");
+      /*} else {
         // If adding, send POST request to create a new expense
 
         const response = await fetch(`${API_URL}/expenses`, {
@@ -52,16 +52,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!response.ok) throw new Error("Failed to add expense");
 
         showMessage("Expense added successfully!", "success");
+*/
+      // Fetch and update expenses & category summary after adding new expense
+      fetchExpenses();
+      fetchCategorySummary();
+      fetchTotalExpenses();
+      fetchCategorySummary();
 
-        // Fetch and update expenses & category summary after adding new expense
-        fetchExpenses();
-        fetchCategorySummary();
-        fetchTotalExpenses();
-        fetchCategorySummary();
-
-        form.reset();
-        currentEditId = null; // Reset the edit ID after adding a new expense
-      }
+      form.reset();
+      //currentEditId = null; // Reset the edit ID after adding a new expense
     } catch (error) {
       showMessage(error.message, "danger");
     }
@@ -139,64 +138,72 @@ document.addEventListener("DOMContentLoaded", () => {
           expense.id
         }">Edit</button>
         <!-- delete button -->
-        <button class="btn btn-sm btn-danger delete-btn" data-id="${expense.id}" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</button>
+        <button class="btn btn-sm btn-danger delete-btn" data-id="${
+          expense.id
+        }" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</button>
       </td>
     `;
     expenseList.appendChild(row);
   }
 
-    // Handle delete button clicks
-    expenseList.addEventListener("click", (e) => {
-      if (e.target.classList.contains("edit-btn")) {
-        const expenseId = e.target.dataset.id;
-        const row = e.target.closest("tr");
-        const description = row.children[0].textContent;
-        const amount = row.children[1].textContent;
-        const category = row.children[2].textContent;
-  
-        document.getElementById("edit-description").value = description;
-        document.getElementById("edit-amount").value = amount;
-        document.getElementById("edit-category").value = category;
-  
-        currentEditId = expenseId;
-        const editModal = new bootstrap.Modal(document.getElementById("editModal"));
-        editModal.show();
-      }
-  
-      // delete button handler
-      if (e.target.classList.contains("delete-btn")) {
-        expenseIdToDelete = e.target.dataset.id;
+  // Handle delete button clicks
+  expenseList.addEventListener("click", (e) => {
+    if (e.target.classList.contains("edit-btn")) {
+      const expenseId = e.target.dataset.id;
+      const row = e.target.closest("tr");
+      const description = row.children[0].textContent;
+      const amount = row.children[1].textContent;
+      const category = row.children[2].textContent;
+
+      document.getElementById("edit-description").value = description;
+      document.getElementById("edit-amount").value = amount;
+      document.getElementById("edit-category").value = category;
+
+      currentEditId = expenseId;
+      const editModal = new bootstrap.Modal(
+        document.getElementById("editModal")
+      );
+      editModal.show();
+    }
+
+    // delete button handler
+    if (e.target.classList.contains("delete-btn")) {
+      expenseIdToDelete = e.target.dataset.id;
+    }
+  });
+
+  // confirm delete from modal
+  const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener("click", async () => {
+      if (!expenseIdToDelete) return;
+
+      try {
+        const response = await fetch(
+          `${API_URL}/expenses/${expenseIdToDelete}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) throw new Error("Failed to delete expense");
+
+        showMessage("Expense deleted successfully!", "success");
+        fetchExpenses();
+        fetchCategorySummary();
+        fetchTotalExpenses();
+      } catch (error) {
+        console.error("Error deleting expense:", error);
+        showMessage("Failed to delete expense.", "danger");
+      } finally {
+        expenseIdToDelete = null;
+        const deleteModal = bootstrap.Modal.getInstance(
+          document.getElementById("deleteModal")
+        );
+        deleteModal.hide();
       }
     });
-  
-    // confirm delete from modal
-    const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
-    if (confirmDeleteBtn) {
-      confirmDeleteBtn.addEventListener("click", async () => {
-        if (!expenseIdToDelete) return;
-  
-        try {
-          const response = await fetch(`${API_URL}/expenses/${expenseIdToDelete}`, {
-            method: "DELETE",
-          });
-  
-          if (!response.ok) throw new Error("Failed to delete expense");
-  
-          showMessage("Expense deleted successfully!", "success");
-          fetchExpenses();
-          fetchCategorySummary();
-          fetchTotalExpenses();
-        } catch (error) {
-          console.error("Error deleting expense:", error);
-          showMessage("Failed to delete expense.", "danger");
-        } finally {
-          expenseIdToDelete = null;
-          const deleteModal = bootstrap.Modal.getInstance(document.getElementById("deleteModal"));
-          deleteModal.hide();
-        }
-      });
-    }
-  
+  }
 
   // Delegate clicks on Edit buttons using event delegation
   /*expenseList.addEventListener("click", (e) => {
@@ -226,7 +233,9 @@ document.addEventListener("DOMContentLoaded", () => {
   editForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const description = document.getElementById("edit-description").value.trim();
+    const description = document
+      .getElementById("edit-description")
+      .value.trim();
     const amount = document.getElementById("edit-amount").value.trim();
     const category = document.getElementById("edit-category").value;
 
@@ -238,8 +247,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const expense = { description, amount: parseFloat(amount), category };
 
     try {
-      const response = await fetch(`${API_URL}/expenses`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/expenses/${currentEditId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(expense),
       });
