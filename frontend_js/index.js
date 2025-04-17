@@ -6,6 +6,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalDisplay = document.getElementById("totalDisplay");
   let currentUser = null;
   let categoryChart = null;
+  let isLoading = false;
+  let dataLoaded = false;
+  let isSubmitting = false;
 
   // ------------------ AUTH HANDLERS ------------------
   async function handleLogin(e) {
@@ -70,9 +73,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ------------------ AUTH STATE MGMT ------------------
+
   function checkAuthState() {
     const token = localStorage.getItem("token");
     if (!token) {
+      dataLoaded = false; // Reset flag on logout
       updateUIForUnauthenticated();
       return;
     }
@@ -88,7 +93,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       currentUser = payload;
       updateUIForAuthenticated();
-      loadData();
+      // Only load data once per auth session
+      if (!dataLoaded) {
+        dataLoaded = true;
+        loadData();
+      }
     } catch (error) {
       console.error("Auth error:", error);
       showMessage(`Session expired: ${error.message}`, "warning");
@@ -101,8 +110,16 @@ document.addEventListener("DOMContentLoaded", () => {
     mainContent.classList.remove("d-none");
     authButtons.innerHTML = `
       <span class="me-3">Welcome, ${currentUser.email}</span>
-      <button class="btn btn-danger" onclick="logout()">Logout</button>
+      <button class="btn btn-danger" id="logoutBtn">Logout</button>
     `;
+    // Add the event listener for the new logout button
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      currentUser = null;
+      dataLoaded = false;
+      checkAuthState();
+      showMessage("Logged out successfully", "success");
+    });
   }
 
   function updateUIForUnauthenticated() {
@@ -262,10 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Category summary:", data);
 
       const chartCanvas = document.getElementById("chartCanvas");
-      if (!chartCanvas) {
-        console.error("Chart canvas element not found");
-        return;
-      }
+      if (!chartCanvas) return;
 
       const ctx = chartCanvas.getContext("2d");
 
@@ -274,17 +288,24 @@ document.addEventListener("DOMContentLoaded", () => {
         window.categoryChart.destroy();
       }
 
+      // Extract labels and numeric values
+      const labels = data.map((item) => item.category);
+      const values = data.map((item) => parseFloat(item.total));
       //  Create new chart
       window.categoryChart = new Chart(ctx, {
         type: "pie",
         data: {
-          labels: data.labels,
+          labels: labels,
           datasets: [
             {
-              data: data.values,
+              data: values,
               backgroundColor: ["#ff6384", "#36a2eb", "#cc65fe", "#ffce56"],
             },
           ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
         },
       });
     } catch (error) {
@@ -316,32 +337,40 @@ document.addEventListener("DOMContentLoaded", () => {
       throw error; // Keep to maintain error propagation
     }
   }
-
+  // ------------------ ADD EXPENSE ------------------
   async function handleAddExpense(e) {
     e.preventDefault();
+
+    if (isSubmitting) return;
+    isSubmitting = true;
 
     const token = localStorage.getItem("token");
     const descriptionInput = document.getElementById("expenseDescription");
     const amountInput = document.getElementById("expenseAmount");
     const categoryInput = document.getElementById("expenseCategory");
-    // Add this check:
+
     if (!descriptionInput || !amountInput || !categoryInput) {
       showMessage("Form elements missing!", "danger");
+      isSubmitting = false;
       return;
     }
+
     const description = descriptionInput.value;
     const amount = parseFloat(amountInput.value);
     const category = categoryInput.value;
 
-    // input validation
     if (isNaN(amount) || amount <= 0) {
       showMessage("Please enter a valid amount", "danger");
+      isSubmitting = false;
       return;
     }
+
     if (!description || !category) {
       showMessage("Please fill in all fields", "danger");
+      isSubmitting = false;
       return;
     }
+
     try {
       const res = await fetch(`${API_URL}/expenses`, {
         method: "POST",
@@ -363,20 +392,30 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       console.error(err);
       showMessage("Could not add expense", "danger");
+    } finally {
+      isSubmitting = false;
     }
   }
 
   // ------------------ INIT ------------------
-  function loadData() {
-    if (!currentUser) {
-      clearUI();
-      return;
+  async function loadData() {
+    if (!currentUser || isLoading) return;
+
+    isLoading = true;
+    showLoading(true);
+
+    try {
+      await Promise.all([
+        fetchExpenses(),
+        fetchCategorySummary(),
+        fetchTotalExpenses(),
+      ]);
+    } catch (error) {
+      showMessage("Failed to load data", "danger");
+    } finally {
+      isLoading = false;
+      showLoading(false);
     }
-    Promise.all([
-      fetchExpenses(),
-      fetchCategorySummary(),
-      fetchTotalExpenses(),
-    ]).catch(() => showMessage("Failed to load data", "danger"));
   }
 
   function initializeApplication() {
@@ -404,10 +443,12 @@ document.addEventListener("DOMContentLoaded", () => {
 // ------------------ GLOBAL ------------------
 window.logout = () => {
   localStorage.removeItem("token");
-  document.dispatchEvent(new Event("DOMContentLoaded"));
+  // Instead of triggering DOMContentLoaded:
+  currentUser = null;
+  dataLoaded = false;
+  checkAuthState(); // This will properly update the UI
   showMessage("Logged out successfully", "success");
 };
-
 function showMessage(text, type) {
   const messageEl = document.getElementById("message");
   messageEl.textContent = text;
