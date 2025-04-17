@@ -351,8 +351,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!res.ok) {
         throw new Error(data.error || "Failed to fetch total");
       }
-
-      totalDisplay.textContent = `Total: $${data.total}`;
+      const totalExpenseValue = document.getElementById("total-expense-value");
+      if (totalExpenseValue) {
+        totalExpenseValue.textContent = `€${Number(data.total).toFixed(2)}`;
+      }
     } catch (error) {
       showMessage("Network error - please check connection", "danger");
       console.error("Fetch error:", error);
