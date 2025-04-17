@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Meta Tags -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Expense Tracker</title>
+
+    <!-- Title -->
+    <title>Expense Tracker | Manage Your Finances</title>
+
+    <!-- External Stylesheets -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -11,145 +16,361 @@
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
-    
-    <div class="container mt-5">
-      <h2 class="text-center">Expense Tracker</h2>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <!-- Authentication Buttons Container -->
+        <div class="d-flex justify-content-end w-100" id="authButtons">
+          <!-- Default state: Login/Signup buttons will be injected here -->
+        </div>
+      </div>
+    </nav>
 
-      <!-- Expense Form -->
-      <div class="card p-3 mt-3">
-        <h4>Add an Expense</h4>
-        <form id="expense-form">
-          <div class="mb-2">
-            <label for="description" class="form-label">Description:</label>
-            <input type="text" id="description" class="form-control" required />
+    <!-- Authentication Modals -->
+    <!-- Login Modal -->
+    <div
+      class="modal fade"
+      id="loginModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="loginModalLabel"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="loginModalLabel">
+              Login to Your Account
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
           </div>
-          <div class="mb-2">
-            <label for="amount" class="form-label">Amount (€):</label>
-            <input type="number" id="amount" class="form-control" required />
+          <div class="modal-body">
+            <form id="loginForm" role="form">
+              <div class="mb-3">
+                <label for="loginEmail" class="form-label">Email Address</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="loginEmail"
+                  required
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="loginPassword" class="form-label">Password</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="loginPassword"
+                  required
+                  placeholder="Enter your password"
+                />
+              </div>
+              <button type="submit" class="btn btn-primary w-100">
+                Sign In
+              </button>
+            </form>
           </div>
-          <div class="mb-2">
-            <label for="category" class="form-label">Category:</label>
-            <select id="category" class="form-select" required>
-              <option value="Food">Food</option>
-              <option value="Transport">Transport</option>
-              <option value="Shopping">Shopping</option>
-              <option value="Other">Other</option>
-            </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div
+      class="modal fade"
+      id="signupModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="signupModalLabel"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="signupModalLabel">
+              Create New Account
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
           </div>
-          <button type="submit" class="btn btn-primary w-100">
-            Add Expense
-          </button>
+          <div class="modal-body">
+            <form id="signupForm" role="form">
+              <div class="mb-3">
+                <label for="signupEmail" class="form-label"
+                  >Email Address</label
+                >
+                <input
+                  type="email"
+                  class="form-control"
+                  id="signupEmail"
+                  required
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="signupPassword" class="form-label">Password</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="signupPassword"
+                  autocomplete="new-password"
+                  required
+                  placeholder="Create a password"
+                />
+              </div>
+              <button type="submit" class="btn btn-primary w-100">
+                Create Account
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content (Visible only when authenticated) -->
+    <main class="container mt-5 d-none" id="mainContent">
+      <!-- Header -->
+      <h1 class="text-center mb-4">Expense Tracker</h1>
+
+      <!-- Expense Management Section -->
+      <section aria-labelledby="expenseSectionHeading">
+        <h2 id="expenseSectionHeading" class="visually-hidden">
+          Expense Management
+        </h2>
+
+        <!-- Add Expense Card -->
+        <div class="card p-3 mb-4">
+          <div class="card-body">
+            <h3 class="card-title mb-4">Add New Expense</h3>
+            <form id="expenseForm" class="needs-validation" novalidate>
+              <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <input
+                  type="text"
+                  id="expenseDescription"
+                  class="form-control"
+                  required
+                  placeholder="Enter expense description"
+                />
+                <div class="invalid-feedback">Please enter a description</div>
+              </div>
+              <div class="mb-3">
+                <label for="amount" class="form-label">Amount (€)</label>
+                <input
+                  type="number"
+                  id="expenseAmount"
+                  class="form-control"
+                  required
+                  step="0.01"
+                  placeholder="0.00"
+                />
+                <div class="invalid-feedback">Please enter a valid amount</div>
+              </div>
+              <div class="mb-3">
+                <label for="category" class="form-label">Category</label>
+                <select id="expenseCategory" class="form-select" required>
+                  <option value="" disabled selected>Select a category</option>
+                  <option value="Food">Food</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Other">Other</option>
+                </select>
+                <div class="invalid-feedback">Please select a category</div>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">
+                Add Expense
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- System Messages -->
+        <div
+          id="message"
+          class="alert alert-success mt-3 d-none"
+          role="alert"
+        ></div>
+
+        <!-- Total Expenses Display -->
+        <div id="totalDisplay">
+          <div class="alert alert-info mt-3" role="region" aria-live="polite">
+            <h3 class="h4">Total Expenses</h3>
+            <p class="mb-0">€<span id="total-amount">0.00</span></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Data Visualization Section -->
+      <section aria-labelledby="visualizationHeading" class="mt-5">
+        <div class="card p-3">
+          <div class="card-body">
+            <h3 class="card-title text-center mb-4" id="visualizationHeading">
+              Category Breakdown
+            </h3>
+            <div class="row justify-content-center">
+              <div class="col-md-6">
+                <canvas
+                  id="categoryChart"
+                  class="w-100"
+                  style="height: auto"
+                  aria-label="Expense category distribution chart"
+                ></canvas>
+              </div>
+            </div>
+            <div class="mt-4">
+              <table class="table" aria-describedby="categorySummaryTableDesc">
+                <caption id="categorySummaryTableDesc" class="visually-hidden">
+                  Detailed breakdown of expenses by category
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Category</th>
+                    <th scope="col">Total (€)</th>
+                  </tr>
+                </thead>
+                <tbody id="category-summary"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Expense List Section -->
+      <section aria-labelledby="expenseListHeading" class="mt-5">
+        <div class="card p-3">
+          <div class="card-body">
+            <h3 class="card-title mb-4" id="expenseListHeading">
+              Expense History
+            </h3>
+            <div class="table-responsive">
+              <table class="table" aria-describedby="expenseListDesc">
+                <caption id="expenseListDesc" class="visually-hidden">
+                  List of all recorded expenses
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Description</th>
+                    <th scope="col">Amount (€)</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="expenseList"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Edit Expense Modal -->
+    <div
+      class="modal fade"
+      id="editExpenseModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <form id="editExpenseForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Expense</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="edit-expense-id" />
+            <div class="mb-3">
+              <label for="edit-description" class="form-label"
+                >Description</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="edit-description"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label for="edit-amount" class="form-label">Amount</label>
+              <input
+                type="number"
+                class="form-control"
+                id="edit-amount"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label for="edit-category" class="form-label">Category</label>
+              <input
+                type="text"
+                class="form-control"
+                id="edit-category"
+                required
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
         </form>
       </div>
-      <!-- Confirmation Message -->
-      <div id="message" class="alert alert-success mt-3 d-none"></div>
-
-      <!-- Total Expense Display -->
-      <div id="total-expense" class="alert alert-info mt-3">
-        Total Expenses: €<span id="total-amount">0</span>
-      </div>
     </div>
 
-      <!-- Category Breakdown + Pie Chart -->
-      <div class="card p-3 mt-4">
-        <h4 class="text-center">Category Breakdown</h4>
-        <div class="row justify-content-center">
-          <div class="col-md-6 col-sm-12 text-center">
-            <canvas id="categoryChart" class="w-100" style="max-width: 300px; height: auto;"></canvas>
+    <!-- Delete Confirmation Modal -->
+    <div
+      class="modal fade"
+      id="deleteModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="deleteModalLabel"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to permanently delete this expense?</p>
+            <input type="hidden" id="delete-expense-id" />
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+              Delete Permanently
+            </button>
           </div>
         </div>
-        <table class="table mt-3">
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th>Total Expense (€)</th>
-            </tr>
-          </thead>
-          <tbody id="category-summary"></tbody>
-        </table>
       </div>
     </div>
 
-    <!-- Expense Table -->
-    <div class="card p-3 mt-4">
-      <h4>Expense List</h4>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th>Amount (€)</th>
-            <th>Category</th>
-            <th>Actions</th> <!-- Added actions column -->
-          </tr>
-        </thead>
-        <tbody id="expense-list"></tbody>
-      </table>
-    </div>
-
-  <!-- Edit Expense Modal -->
-
-  <div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Edit Expense</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <form id="edit-expense-form">
-            <div class="mb-3">
-              <label for="edit-description" class="form-label">Description:</label>
-              <input type="text" class="form-control" id="edit-description" required>
-            </div>
-            <div class="mb-3">
-              <label for="edit-amount" class="form-label">Amount (€):</label>
-              <input type="number" class="form-control" id="edit-amount" required>
-            </div>
-            <div class="mb-3">
-              <label for="edit-category" class="form-label">Category:</label>
-              <select class="form-select" id="edit-category" required>
-                <option value="Food">Food</option>
-                <option value="Transport">Transport</option>
-                <option value="Shopping">Shopping</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="submit" class="btn btn-primary">Update Expense</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Delete Confirmation Modal -->
-  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Are you sure you want to delete this expense?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button id="confirmDeleteBtn" type="button" class="btn btn-danger">Delete</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-
- <!-- Bootstrap JS -->
+    <!-- Scripts -->
+    <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Main JS -->
-    <script src="frontend_js/index.js"></script>
-  <!-- Include Chart.js -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Application Script -->
+    <script src="frontend_js/index.js"></script>
   </body>
 </html>

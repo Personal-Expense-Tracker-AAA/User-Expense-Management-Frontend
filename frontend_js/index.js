@@ -1,321 +1,409 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("expense-form");
-  const expenseList = document.getElementById("expense-list");
-  const categorySummaryTable = document.getElementById("category-summary");
-  const message = document.getElementById("message");
-  const editForm = document.getElementById("edit-expense-form");
-  const API_URL = "http://localhost:5000"; // Update with your actual backend URL
+  const API_URL = "http://localhost:5000";
+  const mainContent = document.getElementById("mainContent");
+  const authButtons = document.getElementById("authButtons");
+  const expenseList = document.getElementById("expenseList");
+  const totalDisplay = document.getElementById("totalDisplay");
+  let currentUser = null;
+  let categoryChart = null;
 
-  let currentEditId = null; // To store the ID of the expense being edited
-  let expenseIdToDelete = null; // to store the ID of the expense to delete
-
-  // Fetch and display expenses & category summary on page load
-  fetchExpenses();
-  fetchCategorySummary();
-  fetchTotalExpenses();
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const description = document.getElementById("description").value.trim();
-    const amount = document.getElementById("amount").value.trim();
-    const category = document.getElementById("category").value;
-
-    if (!description || !amount || isNaN(amount)) {
-      showMessage("Please enter valid data!", "danger");
-      return;
-    }
-
-    const expense = { description, amount: parseFloat(amount), category };
+  // ------------------ AUTH HANDLERS ------------------
+  async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
 
     try {
-      //if (currentEditId) {
-      // If editing, send PUT request to update the expense
-      const response = await fetch(`${API_URL}/expenses/${currentEditId}`, {
-        method: "PUT",
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(expense),
+        body: JSON.stringify({ email, password }),
       });
 
-      if (!response.ok) throw new Error("Failed to update expense");
-
-      showMessage("Expense updated successfully!", "success");
-      /*} else {
-        // If adding, send POST request to create a new expense
-
-        const response = await fetch(`${API_URL}/expenses`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(expense),
-        });
-
-        if (!response.ok) throw new Error("Failed to add expense");
-
-        showMessage("Expense added successfully!", "success");
-*/
-      // Fetch and update expenses & category summary after adding new expense
-      fetchExpenses();
-      fetchCategorySummary();
-      fetchTotalExpenses();
-      fetchCategorySummary();
-
-      form.reset();
-      //currentEditId = null; // Reset the edit ID after adding a new expense
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        setTimeout(checkAuthState, 0);
+        showMessage("Login successful!", "success");
+        document.getElementById("loginForm").reset();
+        const modal = bootstrap.Modal.getInstance(
+          document.getElementById("loginModal")
+        );
+        if (modal) modal.hide(); // <-- Add null check here
+      } else {
+        showMessage(data.error || "Login failed", "danger");
+      }
     } catch (error) {
-      showMessage(error.message, "danger");
-    }
-  });
-
-  // Fetch expenses and category-wise totals
-  async function fetchExpenses() {
-    try {
-      const response = await fetch(`${API_URL}/expenses`);
-      const expenses = await response.json();
-
-      expenseList.innerHTML = ""; // Clear current list
-      expenses.forEach((expense) => addExpenseToTable(expense));
-    } catch (error) {
-      console.error("Error fetching expenses:", error);
-      showMessage("Failed to load expenses.", "danger"); // Fix #44
+      showMessage("Network error - please try again later", "danger");
     }
   }
 
-  // Fetch and display category-wise totals
+  async function handleSignup(e) {
+    e.preventDefault();
+    const email = document.getElementById("signupEmail").value;
+    const password = document.getElementById("signupPassword").value;
+
+    try {
+      const response = await fetch(`${API_URL}/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        checkAuthState();
+        showMessage("Signup successful!", "success");
+        document.getElementById("signupForm").reset();
+        bootstrap.Modal.getInstance(
+          document.getElementById("signupModal")
+        ).hide();
+      } else {
+        showMessage(data.error || "Signup failed", "danger");
+      }
+    } catch (error) {
+      showMessage("Network error - please try again later", "danger");
+    }
+  }
+
+  // ------------------ AUTH STATE MGMT ------------------
+  function checkAuthState() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      updateUIForUnauthenticated();
+      return;
+    }
+
+    try {
+      const [header, payloadPart, signature] = token.split(".");
+      if (!header || !payloadPart || !signature) {
+        throw new Error("Invalid token format");
+      }
+      const payload = JSON.parse(atob(payloadPart));
+      if (payload.exp * 1000 < Date.now()) {
+        throw new Error("Token expired");
+      }
+      currentUser = payload;
+      updateUIForAuthenticated();
+      loadData();
+    } catch (error) {
+      console.error("Auth error:", error);
+      showMessage(`Session expired: ${error.message}`, "warning");
+      localStorage.removeItem("token");
+      updateUIForUnauthenticated();
+    }
+  }
+
+  function updateUIForAuthenticated() {
+    mainContent.classList.remove("d-none");
+    authButtons.innerHTML = `
+      <span class="me-3">Welcome, ${currentUser.email}</span>
+      <button class="btn btn-danger" onclick="logout()">Logout</button>
+    `;
+  }
+
+  function updateUIForUnauthenticated() {
+    mainContent.classList.add("d-none");
+    authButtons.innerHTML = `
+      <button class="btn btn-outline-primary me-2" 
+              data-bs-toggle="modal" 
+              data-bs-target="#loginModal">Login</button>
+      <button class="btn btn-primary" 
+              data-bs-toggle="modal" 
+              data-bs-target="#signupModal">Sign Up</button>
+    `;
+  }
+
+  // ------------------ FETCH FUNCTIONS ------------------
+  async function fetchExpenses() {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/expenses`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch expenses");
+      }
+
+      // Display logic (simple example)
+      const expenseList = document.getElementById("expenseList");
+      expenseList.innerHTML = data
+        .map(
+          (expense) => `
+       <tr>
+          <td>${expense.description}</td>
+          <td>€${expense.amount.toFixed(2)}</td>
+          <td>${expense.category}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-2 edit-btn" data-id="${
+              expense.id
+            }">Edit</button>
+            <button class="btn btn-sm btn-danger delete-btn" data-id="${
+              expense.id
+            }">Delete</button>
+          </td>
+        </tr>
+      `
+        )
+        .join("");
+        // Attach event listeners to buttons
+    document.querySelectorAll(".delete-btn").forEach((btn) => {
+      btn.addEventListener("click", () => handleDeleteExpense(btn.dataset.id));
+    });
+
+    document.querySelectorAll(".edit-btn").forEach((btn) => {
+      btn.addEventListener("click", () => handleEditExpense(btn.dataset.id, data));
+    });
+
+    } catch (error) {
+      showMessage("Network error - please check connection", "danger");
+      console.error("Fetch error:", error);
+      throw error; // Keep this to propagate error for loadData's Promise.all
+    }
+  }
+  async function handleDeleteExpense(expenseId) {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/expenses/${expenseId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Delete failed");
+  
+      showMessage("Expense deleted", "success");
+      fetchExpenses(); // Refresh the list
+    } catch (error) {
+      showMessage("Delete failed", "danger");
+      console.error("Delete error:", error);
+    }
+  }
+  
+  function handleEditExpense(id, data) {
+    const expense = data.find((e) => e.id == id);
+    if (!expense) return;
+  
+    document.getElementById("edit-expense-id").value = id;
+    document.getElementById("edit-description").value = expense.description;
+    document.getElementById("edit-amount").value = expense.amount;
+    document.getElementById("edit-category").value = expense.category;
+  
+    // Show modal (using Bootstrap)
+    const modal = new bootstrap.Modal(document.getElementById("editExpenseModal"));
+    modal.show();
+  }
+  
+  document.getElementById("editExpenseForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = document.getElementById("edit-expense-id").value;
+    const description = document.getElementById("edit-description").value;
+    const amount = parseFloat(document.getElementById("edit-amount").value);
+    const category = document.getElementById("edit-category").value;
+  
+    const token = localStorage.getItem("token");
+  
+    try {
+      const res = await fetch(`${API_URL}/expenses/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ description, amount, category }),
+      });
+  
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Edit failed");
+  
+      showMessage("Expense updated", "success");
+      bootstrap.Modal.getInstance(document.getElementById("editExpenseModal")).hide();
+      fetchExpenses(); // Refresh
+    } catch (error) {
+      showMessage("Edit failed", "danger");
+      console.error("Edit error:", error);
+    }
+  });
 
   async function fetchCategorySummary() {
+    const token = localStorage.getItem("token");
     try {
-      const response = await fetch(`${API_URL}/expenses/category-summary`);
-      if (!response.ok) throw new Error("Failed to fetch category summary");
-      const categories = await response.json();
-
-      const categorySummaryTable = document.getElementById("category-summary");
-      categorySummaryTable.innerHTML = ""; // Clear previous data
-      const labels = [];
-      const data = [];
-
-      categories.forEach((category) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `<td>${category.category}</td><td>${parseFloat(
-          category.total
-        ).toFixed(2)}</td>`;
-        categorySummaryTable.appendChild(row);
-
-        labels.push(category.category);
-        data.push(parseFloat(category.total));
+      const res = await fetch(`${API_URL}/expenses/category-summary`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
+      const data = await res.json();
 
-      renderCategoryChart(labels, data);
-    } catch (error) {
-      console.error("Error fetching category summary:", error);
-      showMessage("Failed to load category summary.", "danger"); // Fix #44
-    }
-  }
-
-  // Fetch and display total expenses
-  async function fetchTotalExpenses() {
-    try {
-      const response = await fetch(`${API_URL}/expenses/total`);
-      if (!response.ok) throw new Error("Failed to fetch total expenses");
-      const data = await response.json();
-      document.getElementById("total-amount").textContent = parseFloat(
-        data.total
-      ).toFixed(2);
-    } catch (error) {
-      console.error("Error fetching total expenses:", error);
-      showMessage("Failed to load total expenses.", "danger"); // Fix #44
-    }
-  }
-
-  function addExpenseToTable(expense) {
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-      <td>${expense.description}</td>
-      <td>${parseFloat(expense.amount).toFixed(2)}</td>
-      <td>${expense.category}</td>
-      <td>
-        <button class="btn btn-sm btn-warning edit-btn" data-id="${
-          expense.id
-        }">Edit</button>
-        <!-- delete button -->
-        <button class="btn btn-sm btn-danger delete-btn" data-id="${
-          expense.id
-        }" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</button>
-      </td>
-    `;
-    expenseList.appendChild(row);
-  }
-
-  // Handle delete button clicks
-  expenseList.addEventListener("click", (e) => {
-    if (e.target.classList.contains("edit-btn")) {
-      const expenseId = e.target.dataset.id;
-      const row = e.target.closest("tr");
-      const description = row.children[0].textContent;
-      const amount = row.children[1].textContent;
-      const category = row.children[2].textContent;
-
-      document.getElementById("edit-description").value = description;
-      document.getElementById("edit-amount").value = amount;
-      document.getElementById("edit-category").value = category;
-
-      currentEditId = expenseId;
-      const editModal = new bootstrap.Modal(
-        document.getElementById("editModal")
-      );
-      editModal.show();
-    }
-
-    // delete button handler
-    if (e.target.classList.contains("delete-btn")) {
-      expenseIdToDelete = e.target.dataset.id;
-    }
-  });
-
-  // confirm delete from modal
-  const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
-  if (confirmDeleteBtn) {
-    confirmDeleteBtn.addEventListener("click", async () => {
-      if (!expenseIdToDelete) return;
-
-      try {
-        const response = await fetch(
-          `${API_URL}/expenses/${expenseIdToDelete}`,
-          {
-            method: "DELETE",
-          }
-        );
-
-        if (!response.ok) throw new Error("Failed to delete expense");
-
-        showMessage("Expense deleted successfully!", "success");
-        fetchExpenses();
-        fetchCategorySummary();
-        fetchTotalExpenses();
-      } catch (error) {
-        console.error("Error deleting expense:", error);
-        showMessage("Failed to delete expense.", "danger");
-      } finally {
-        expenseIdToDelete = null;
-        const deleteModal = bootstrap.Modal.getInstance(
-          document.getElementById("deleteModal")
-        );
-        deleteModal.hide();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch category summary");
       }
-    });
+
+      // Pie chart logic can be implemented here
+      console.log("Category summary:", data);
+      // Add memory leak prevention here
+      if (categoryChart) {
+        categoryChart.destroy(); // Destroy previous chart before creating new one
+      }
+
+      // Add this chart creation example (modify with your actual chart config)
+      const chartCanvas = document.getElementById("chartCanvas");
+      if (!chartCanvas) {
+        console.error("Chart canvas element not found");
+        return;
+      }
+      if (categoryChart) categoryChart.destroy();
+      const ctx = chartCanvas.getContext("2d");
+
+      categoryChart = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: data.labels,
+          datasets: [
+            {
+              data: data.values,
+              backgroundColor: ["#ff6384", "#36a2eb", "#cc65fe", "#ffce56"],
+            },
+          ],
+        },
+      });
+    } catch (error) {
+      showMessage("Network error - please check connection", "danger");
+      console.error("Fetch error:", error);
+      throw error; // Keep to maintain error propagation
+    }
   }
 
-  // Delegate clicks on Edit buttons using event delegation
-  /*expenseList.addEventListener("click", (e) => {
-    if (e.target.classList.contains("edit-btn")) {
-      const expenseId = e.target.dataset.id;
-      // Get the row the button is in
-      const row = e.target.closest("tr");
-      const description = row.children[0].textContent;
-      const amount = row.children[1].textContent;
-      const category = row.children[2].textContent;
+  async function fetchTotalExpenses() {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/expenses/total`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
 
-      // Fill the form with the selected expense details
-      document.getElementById("edit-description").value = description;
-      document.getElementById("edit-amount").value = amount;
-      document.getElementById("edit-category").value = category;
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch total");
+      }
 
-      currentEditId = expenseId;
-      // Show the modal
-      const editModal = new bootstrap.Modal(
-        document.getElementById("editModal")
-      );
-      editModal.show();
+      totalDisplay.textContent = `Total: $${data.total}`;
+    } catch (error) {
+      showMessage("Network error - please check connection", "danger");
+      console.error("Fetch error:", error);
+      throw error; // Keep to maintain error propagation
     }
-  });
-  */
-  // Add edit form submission handler
-  editForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  }
 
-    const description = document
-      .getElementById("edit-description")
-      .value.trim();
-    const amount = document.getElementById("edit-amount").value.trim();
-    const category = document.getElementById("edit-category").value;
+  async function handleAddExpense(e) {
+    e.preventDefault();
 
-    if (!description || !amount || isNaN(amount)) {
-      showMessage("Please enter valid data!", "danger");
+    const token = localStorage.getItem("token");
+    const descriptionInput = document.getElementById("expenseDescription");
+    const amountInput = document.getElementById("expenseAmount");
+    const categoryInput = document.getElementById("expenseCategory");
+    // Add this check:
+    if (!descriptionInput || !amountInput || !categoryInput) {
+      showMessage("Form elements missing!", "danger");
       return;
     }
+    const description = descriptionInput.value;
+    const amount = parseFloat(amountInput.value);
+    const category = categoryInput.value;
 
-    const expense = { description, amount: parseFloat(amount), category };
-
+    // input validation
+    if (isNaN(amount) || amount <= 0) {
+      showMessage("Please enter a valid amount", "danger");
+      return;
+    }
+    if (!description || !category) {
+      showMessage("Please fill in all fields", "danger");
+      return;
+    }
     try {
-      const response = await fetch(`${API_URL}/expenses/${currentEditId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(expense),
+      const res = await fetch(`${API_URL}/expenses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ description, amount, category }),
       });
 
-      if (!response.ok) throw new Error("Failed to update expense");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to add expense");
+      }
 
-      showMessage("Expense updated successfully!", "success");
-
-      // Refresh data
-      fetchExpenses();
-      fetchCategorySummary();
-      fetchTotalExpenses();
-
-      editForm.reset();
-      currentEditId = null; // Ensure this is reset
-
-      // Hide modal
-      const editModal = bootstrap.Modal.getInstance(
-        document.getElementById("editModal")
-      );
-      editModal.hide();
-      currentEditId = null;
-    } catch (error) {
-      showMessage(error.message, "danger");
+      showMessage("Expense added!", "success");
+      document.getElementById("expenseForm").reset();
+      loadData();
+    } catch (err) {
+      console.error(err);
+      showMessage("Could not add expense", "danger");
     }
-  });
-
-  // Remove the currentEditId logic from the original form submit handler
-  // The original form should only handle POST requests now
-
-  function showMessage(text, type) {
-    message.textContent = text;
-    message.className = `alert alert-${type}`;
-    message.classList.remove("d-none");
-    setTimeout(() => message.classList.add("d-none"), 3000);
   }
-  let categoryChart; // Define globally
 
-  function renderCategoryChart(labels, data) {
-    const ctx = document.getElementById("categoryChart").getContext("2d");
-
-    // Destroy the previous instance of the chart if it exists
-    if (categoryChart) {
-      categoryChart.destroy();
+  // ------------------ INIT ------------------
+  function loadData() {
+    if (!currentUser) {
+      clearUI();
+      return;
     }
-
-    // Create the new chart
-    categoryChart = new Chart(ctx, {
-      type: "pie",
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            data: data,
-            backgroundColor: [
-              "#ff6384",
-              "#36a2eb",
-              "#ffce56",
-              "#4bc0c0",
-              "#9966ff",
-            ],
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-      },
-    });
+    Promise.all([
+      fetchExpenses(),
+      fetchCategorySummary(),
+      fetchTotalExpenses(),
+    ]).catch(() => showMessage("Failed to load data", "danger"));
   }
+
+  function initializeApplication() {
+    checkAuthState();
+  }
+
+  function clearUI() {
+    expenseList.innerHTML = "";
+    totalDisplay.textContent = "";
+  }
+
+  // ------------------ EVENTS ------------------
+  const loginForm = document.getElementById("loginForm"); //Safer Event Listeners
+  if (loginForm) loginForm.addEventListener("submit", handleLogin);
+
+  const signupForm = document.getElementById("signupForm");
+  if (signupForm) signupForm.addEventListener("submit", handleSignup);
+
+  const expenseForm = document.getElementById("expenseForm");
+  if (expenseForm) expenseForm.addEventListener("submit", handleAddExpense);
+  // ------------------ START ------------------
+  initializeApplication();
 });
+
+// ------------------ GLOBAL ------------------
+window.logout = () => {
+  localStorage.removeItem("token");
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  showMessage("Logged out successfully", "success");
+};
+
+function showMessage(text, type) {
+  const messageEl = document.getElementById("message");
+  messageEl.textContent = text;
+  messageEl.className = `alert alert-${type} d-block`;
+  setTimeout(() => messageEl.classList.add("d-none"), 3000);
+}
+function showLoading(show = true) {
+  const loader = document.getElementById("loader");
+  if (loader) loader.classList.toggle("d-none", !show);
+}
