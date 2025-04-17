@@ -30,6 +30,8 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("loginModal")
         );
         if (modal) modal.hide(); // <-- Add null check here
+        const mainContent = document.getElementById("chartCanvas");
+        if (mainContent) mainContent.focus();
       } else {
         showMessage(data.error || "Login failed", "danger");
       }
@@ -138,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
           (expense) => `
        <tr>
           <td>${expense.description}</td>
-          <td>€${expense.amount.toFixed(2)}</td>
+          <td>€${Number(expense.amount).toFixed(2)}</td>
           <td>${expense.category}</td>
           <td>
             <button class="btn btn-sm btn-warning me-2 edit-btn" data-id="${
@@ -149,18 +151,21 @@ document.addEventListener("DOMContentLoaded", () => {
             }">Delete</button>
           </td>
         </tr>
-      `
+        `
         )
         .join("");
-        // Attach event listeners to buttons
-    document.querySelectorAll(".delete-btn").forEach((btn) => {
-      btn.addEventListener("click", () => handleDeleteExpense(btn.dataset.id));
-    });
+      // Attach event listeners to buttons
+      document.querySelectorAll(".delete-btn").forEach((btn) => {
+        btn.addEventListener("click", () =>
+          handleDeleteExpense(btn.dataset.id)
+        );
+      });
 
-    document.querySelectorAll(".edit-btn").forEach((btn) => {
-      btn.addEventListener("click", () => handleEditExpense(btn.dataset.id, data));
-    });
-
+      document.querySelectorAll(".edit-btn").forEach((btn) => {
+        btn.addEventListener("click", () =>
+          handleEditExpense(btn.dataset.id, data)
+        );
+      });
     } catch (error) {
       showMessage("Network error - please check connection", "danger");
       console.error("Fetch error:", error);
@@ -176,10 +181,10 @@ document.addEventListener("DOMContentLoaded", () => {
           Authorization: `Bearer ${token}`,
         },
       });
-  
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Delete failed");
-  
+
       showMessage("Expense deleted", "success");
       fetchExpenses(); // Refresh the list
     } catch (error) {
@@ -187,52 +192,57 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Delete error:", error);
     }
   }
-  
+
   function handleEditExpense(id, data) {
     const expense = data.find((e) => e.id == id);
     if (!expense) return;
-  
+
     document.getElementById("edit-expense-id").value = id;
     document.getElementById("edit-description").value = expense.description;
     document.getElementById("edit-amount").value = expense.amount;
     document.getElementById("edit-category").value = expense.category;
-  
+
     // Show modal (using Bootstrap)
-    const modal = new bootstrap.Modal(document.getElementById("editExpenseModal"));
+    const modal = new bootstrap.Modal(
+      document.getElementById("editExpenseModal")
+    );
     modal.show();
   }
-  
-  document.getElementById("editExpenseForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const id = document.getElementById("edit-expense-id").value;
-    const description = document.getElementById("edit-description").value;
-    const amount = parseFloat(document.getElementById("edit-amount").value);
-    const category = document.getElementById("edit-category").value;
-  
-    const token = localStorage.getItem("token");
-  
-    try {
-      const res = await fetch(`${API_URL}/expenses/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ description, amount, category }),
-      });
-  
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Edit failed");
-  
-      showMessage("Expense updated", "success");
-      bootstrap.Modal.getInstance(document.getElementById("editExpenseModal")).hide();
-      fetchExpenses(); // Refresh
-    } catch (error) {
-      showMessage("Edit failed", "danger");
-      console.error("Edit error:", error);
-    }
-  });
 
+  document
+    .getElementById("editExpenseForm")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("edit-expense-id").value;
+      const description = document.getElementById("edit-description").value;
+      const amount = parseFloat(document.getElementById("edit-amount").value);
+      const category = document.getElementById("edit-category").value;
+
+      const token = localStorage.getItem("token");
+
+      try {
+        const res = await fetch(`${API_URL}/expenses/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ description, amount, category }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Edit failed");
+
+        showMessage("Expense updated", "success");
+        bootstrap.Modal.getInstance(
+          document.getElementById("editExpenseModal")
+        ).hide();
+        fetchExpenses(); // Refresh
+      } catch (error) {
+        showMessage("Edit failed", "danger");
+        console.error("Edit error:", error);
+      }
+    });
   async function fetchCategorySummary() {
     const token = localStorage.getItem("token");
     try {
@@ -242,29 +252,30 @@ document.addEventListener("DOMContentLoaded", () => {
           Authorization: `Bearer ${token}`,
         },
       });
+
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(data.error || "Failed to fetch category summary");
       }
 
-      // Pie chart logic can be implemented here
       console.log("Category summary:", data);
-      // Add memory leak prevention here
-      if (categoryChart) {
-        categoryChart.destroy(); // Destroy previous chart before creating new one
-      }
 
-      // Add this chart creation example (modify with your actual chart config)
       const chartCanvas = document.getElementById("chartCanvas");
       if (!chartCanvas) {
         console.error("Chart canvas element not found");
         return;
       }
-      if (categoryChart) categoryChart.destroy();
+
       const ctx = chartCanvas.getContext("2d");
 
-      categoryChart = new Chart(ctx, {
+      // Destroy old chart if it exists
+      if (window.categoryChart) {
+        window.categoryChart.destroy();
+      }
+
+      //  Create new chart
+      window.categoryChart = new Chart(ctx, {
         type: "pie",
         data: {
           labels: data.labels,
@@ -279,7 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       showMessage("Network error - please check connection", "danger");
       console.error("Fetch error:", error);
-      throw error; // Keep to maintain error propagation
+      throw error;
     }
   }
 
