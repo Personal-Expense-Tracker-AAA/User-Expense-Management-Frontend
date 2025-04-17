@@ -277,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       console.log("Category summary:", data);
-
+      // Update the chart
       const chartCanvas = document.getElementById("chartCanvas");
       if (!chartCanvas) return;
 
@@ -308,6 +308,20 @@ document.addEventListener("DOMContentLoaded", () => {
           maintainAspectRatio: false,
         },
       });
+      // Update the category summary table
+      const categorySummaryTable = document.getElementById("category-summary");
+      if (categorySummaryTable) {
+        categorySummaryTable.innerHTML = data
+          .map(
+            (item) => `
+          <tr>
+            <td>${item.category}</td>
+            <td>€${Number(item.total).toFixed(2)}</td>
+          </tr>
+        `
+          )
+          .join("");
+      }
     } catch (error) {
       showMessage("Network error - please check connection", "danger");
       console.error("Fetch error:", error);
