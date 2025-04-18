@@ -189,6 +189,33 @@ document.addEventListener("DOMContentLoaded", () => {
       throw error; // Keep this to propagate error for loadData's Promise.all
     }
   }
+// ------------------ FILTERING FUNCTIONS -------
+  function fetchFilteredExpenses() {
+    const token = localStorage.getItem("token");
+    const category = document.getElementById("filter-category").value;
+    const startDate = document.getElementById("filter-start-date").value;
+    const endDate = document.getElementById("filter-end-date").value;
+
+    let query = [];
+    if (category) query.push(`category=${encodeURIComponent(category)}`);
+    if (startDate) query.push(`startDate=${startDate}`);
+    if (endDate) query.push(`endDate=${endDate}`);
+
+    const url = `${API_URL}/expenses/filter?${query.join("&")}`;
+
+    fetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        renderExpenses(data); // Make sure renderExpenses is defined elsewhere
+      });
+  }
+
+  document.getElementById("apply-filters").addEventListener("click", fetchFilteredExpenses);
+
+  // ------------------ DELETE & EDIT FUNCTIONS ------------------
   async function handleDeleteExpense(expenseId) {
     const token = localStorage.getItem("token");
     try {
