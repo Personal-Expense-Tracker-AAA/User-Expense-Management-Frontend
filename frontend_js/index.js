@@ -135,10 +135,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ------------------ FETCH FUNCTIONS ------------------
-  async function fetchExpenses() {
+  async function fetchExpenses(filters = {}) {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${API_URL}/expenses`, {
+      // Build query string if filters are provided
+      const query = new URLSearchParams();
+      if (filters.category) query.append("category", filters.category);
+      if (filters.startDate) query.append("startDate", filters.startDate);
+      if (filters.endDate) query.append("endDate", filters.endDate);
+
+      /*const url = `${API_URL}/expenses${
+        query.toString() ? `?${query.toString()}` : ""
+      }`;*/
+      const endpoint = query.toString() ? "/expenses/filter" : "/expenses";
+      const url = `${API_URL}${endpoint}?${query.toString()}`;
+
+      const res = await fetch(url, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -150,11 +162,19 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(data.error || "Failed to fetch expenses");
       }
 
-      // Display logic (simple example)
-      const expenseList = document.getElementById("expenseList");
-      expenseList.innerHTML = data
-        .map(
-          (expense) => `
+      return data; // Return data for potential use elsewhere
+    } catch (error) {
+      showMessage("Network error - please check connection", "danger");
+      console.error("Fetch error:", error);
+      throw error; // Keep this to propagate error for loadData's Promise.all
+    }
+  }
+  //-------rendering function for expenses---
+  function renderExpenses(expenses) {
+    const expenseList = document.getElementById("expenseList");
+    expenseList.innerHTML = expenses
+      .map(
+        (expense) => `
        <tr>
           <td>${expense.description}</td>
           <td>€${Number(expense.amount).toFixed(2)}</td>
@@ -169,52 +189,46 @@ document.addEventListener("DOMContentLoaded", () => {
           </td>
         </tr>
         `
-        )
-        .join("");
-      // Attach event listeners to buttons
-      document.querySelectorAll(".delete-btn").forEach((btn) => {
-        btn.addEventListener("click", () =>
-          handleDeleteExpense(btn.dataset.id)
-        );
-      });
+      )
+      .join("");
 
-      document.querySelectorAll(".edit-btn").forEach((btn) => {
-        btn.addEventListener("click", () =>
-          handleEditExpense(btn.dataset.id, data)
-        );
-      });
-    } catch (error) {
-      showMessage("Network error - please check connection", "danger");
-      console.error("Fetch error:", error);
-      throw error; // Keep this to propagate error for loadData's Promise.all
-    }
+    // Reattach event listeners
+    document.querySelectorAll(".delete-btn").forEach((btn) => {
+      btn.addEventListener("click", () => handleDeleteExpense(btn.dataset.id));
+    });
+
+    document.querySelectorAll(".edit-btn").forEach((btn) => {
+      btn.addEventListener("click", () =>
+        handleEditExpense(btn.dataset.id, expenses)
+      );
+    });
   }
-// ------------------ FILTERING FUNCTIONS -------
+  // ------------------ FILTERING FUNCTIONS -------
   function fetchFilteredExpenses() {
-    const token = localStorage.getItem("token");
     const category = document.getElementById("filter-category").value;
     const startDate = document.getElementById("filter-start-date").value;
     const endDate = document.getElementById("filter-end-date").value;
 
-    let query = [];
-    if (category) query.push(`category=${encodeURIComponent(category)}`);
-    if (startDate) query.push(`startDate=${startDate}`);
-    if (endDate) query.push(`endDate=${endDate}`);
-
-    const url = `${API_URL}/expenses/filter?${query.join("&")}`;
-
-    fetch(url, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
+    // Validate dates if both are provided
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      showMessage("End date cannot be before start date", "danger");
+      return;
+    }
+    // Fetch filtered expenses
+    fetchExpenses({
+      category: category || undefined,
+      startDate,
+      endDate,
     })
-      .then((res) => res.json())
       .then((data) => {
-        renderExpenses(data); // Make sure renderExpenses is defined elsewhere
+        renderExpenses(data); // <-- render the filtered data
+        showMessage(`Showing ${data.length} expenses`, "success");
+      })
+      .catch((err) => {
+        console.error("Filtering failed:", err);
+        showMessage("Failed to apply filters", "danger");
       });
   }
-
-  document.getElementById("apply-filters").addEventListener("click", fetchFilteredExpenses);
-
   // ------------------ DELETE & EDIT FUNCTIONS ------------------
   async function handleDeleteExpense(expenseId) {
     const token = localStorage.getItem("token");
@@ -487,6 +501,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const expenseForm = document.getElementById("expenseForm");
   if (expenseForm) expenseForm.addEventListener("submit", handleAddExpense);
+
+  // Add the filter button event listener here
+  const applyFiltersBtn = document.getElementById("apply-filters");
+  if (applyFiltersBtn) {
+    applyFiltersBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      fetchFilteredExpenses();
+    });
+  }
+
+  // Add reset filters functionality if needed
+  const resetFiltersBtn = document.getElementById("reset-filters"); // Add this button to your HTML
+  if (resetFiltersBtn) {
+    resetFiltersBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("filter-category").value = "";
+      document.getElementById("filter-start-date").value = "";
+      document.getElementById("filter-end-date").value = "";
+      fetchExpenses().then(renderExpenses);
+    });
+  }
   // ------------------ START ------------------
   initializeApplication();
 });
