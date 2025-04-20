@@ -1,11 +1,16 @@
-/* Enhanced Color Scheme */
+/* ================ CORE VARIABLES ================ */
 :root {
+  /* Primary Colors */
   --primary-color: #6c5ce7;
   --secondary-color: #00cec9;
   --accent-color: #fd79a8;
+
+  /* Status Colors */
   --success-color: #00b894;
   --warning-color: #fdcb6e;
   --danger-color: #e17055;
+
+  /* Neutral Colors */
   --light-bg: #f0f2f5;
   --card-bg: #ffffff;
   --dark-text: #2d3436;
@@ -17,7 +22,7 @@
   --other-color: #7f8c8d;
 }
 
-/* Background with subtle pattern */
+/* ================ BASE STYLES ================ */
 body {
   background-color: var(--light-bg);
   background-image: linear-gradient(
@@ -28,270 +33,107 @@ body {
     linear-gradient(225deg, rgba(108, 92, 231, 0.05) 25%, transparent 25%),
     linear-gradient(45deg, rgba(108, 92, 231, 0.05) 25%, transparent 25%),
     linear-gradient(315deg, rgba(108, 92, 231, 0.05) 25%, var(--light-bg) 25%);
-  background-position: 40px 0, 40px 0, 0 0, 0 0;
   background-size: 80px 80px;
-  background-repeat: repeat;
   color: var(--dark-text);
   font-family: "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  padding-bottom: 40px;
 }
 
-.container {
-  max-width: 800px;
-}
-
-/* Enhanced Header Styling */
-h2 {
+/* ================ TYPOGRAPHY ================ */
+.section-heading {
   color: var(--primary-color);
   font-weight: 700;
-  padding: 20px 0;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(
-    90deg,
-    var(--primary-color),
-    var(--secondary-color)
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-align: center;
-  font-size: 2.5rem;
-  margin-bottom: 10px;
+  border-bottom: 2px solid var(--secondary-color);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
-h4 {
+.card-title {
   color: var(--secondary-color);
   font-weight: 600;
-  margin-bottom: 15px;
-  border-bottom: 2px solid var(--secondary-color);
-  padding-bottom: 8px;
-  display: inline-block;
+  margin-bottom: 1rem;
 }
 
-/* Enhanced Card Styling */
+/* ================ COMPONENT STYLES ================ */
+/* ----------------- Cards ----------------- */
 .card {
+  background: var(--card-bg);
   border: none;
   border-radius: 15px;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-  background-color: var(--card-bg);
-  margin-bottom: 25px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  overflow: hidden;
-  padding: 20px;
-  border-top: 4px solid var(--primary-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+  }
 }
 
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
-}
-
-/* Card variations by section */
-.card:nth-of-type(2) {
-  border-top-color: var(--secondary-color);
-}
-
-.card:nth-of-type(3) {
-  border-top-color: var(--accent-color);
-}
-
-/* Form Styling */
+/* ----------------- Forms ----------------- */
 .form-control,
 .form-select {
   border-radius: 8px;
   border: 1px solid #e2e8f0;
-  padding: 12px 15px;
+  padding: 0.75rem 1rem;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+
+  &:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.25);
+  }
 }
 
-.form-control:focus,
-.form-select:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.25);
-  transform: translateY(-1px);
+/* ----------------- Buttons ----------------- */
+.btn {
+  &-primary {
+    background: linear-gradient(to right, var(--primary-color), #5b54c9);
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: linear-gradient(to right, #5b54c9, var(--primary-color));
+      transform: translateY(-2px);
+    }
+  }
+
+  &-danger {
+    background: linear-gradient(to right, var(--danger-color), #d35400);
+  }
 }
 
-.form-label {
-  color: var(--dark-text);
-  font-weight: 500;
-  margin-bottom: 5px;
-}
-
-.mb-2 {
-  margin-bottom: 1rem !important;
-}
-
-/* Enhanced Button Styling */
-.btn-primary {
-  background: linear-gradient(to right, var(--primary-color), #5b54c9);
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  padding: 12px 20px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(108, 92, 231, 0.2);
-}
-
-.btn-primary:hover {
-  background: linear-gradient(to right, #5b54c9, var(--primary-color));
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(108, 92, 231, 0.3);
-}
-
-.btn-secondary {
-  background-color: #dfe6e9;
-  color: var(--dark-text);
-  border: none;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.btn-danger {
-  background: linear-gradient(to right, var(--danger-color), #d35400);
-  border: none;
-  box-shadow: 0 4px 10px rgba(225, 112, 85, 0.2);
-}
-
-.btn-danger:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(225, 112, 85, 0.3);
-}
-
-/* Enhanced Table Styling */
+/* ----------------- Tables ----------------- */
 .table {
   border-collapse: separate;
   border-spacing: 0;
-  width: 100%;
-  margin-bottom: 0;
-  color: var(--dark-text);
-  border-radius: 8px;
-  overflow: hidden;
+
+  thead th {
+    background: linear-gradient(
+      to right,
+      rgba(108, 92, 231, 0.1),
+      rgba(0, 206, 201, 0.1)
+    );
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+
+  tbody tr {
+    transition: background-color 0.2s ease;
+
+    &:nth-child(odd) {
+      background-color: rgba(0, 0, 0, 0.01);
+    }
+
+    &:hover {
+      background-color: rgba(108, 92, 231, 0.03);
+    }
+  }
 }
 
-.table thead th {
-  background: linear-gradient(
-    to right,
-    rgba(108, 92, 231, 0.1),
-    rgba(0, 206, 201, 0.1)
-  );
-  color: var(--primary-color);
-  border-bottom: 2px solid var(--secondary-color);
-  padding: 15px;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
-}
-
-.table tbody td {
-  padding: 15px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  vertical-align: middle;
-  transition: background-color 0.2s ease;
-}
-
-.table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.table tbody tr:hover {
-  background-color: rgba(108, 92, 231, 0.03);
-}
-
-/* Zebra striping for better readability */
-.table tbody tr:nth-child(odd) {
-  background-color: rgba(0, 0, 0, 0.01);
-}
-
-/* Category styling in table */
-.category-food {
-  color: white;
-  background-color: var(--food-color);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  display: inline-block;
-}
-
-.category-transport {
-  color: white;
-  background-color: var(--transport-color);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  display: inline-block;
-}
-
-.category-shopping {
-  color: white;
-  background-color: var(--shopping-color);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  display: inline-block;
-}
-
-.category-other {
-  color: white;
-  background-color: var(--other-color);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  display: inline-block;
-}
-
-/* Enhanced Alert Styling */
-.alert {
-  border: none;
-  border-radius: 10px;
-  padding: 15px 20px;
-  font-weight: 500;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-
-.alert-success {
-  background: linear-gradient(
-    to right,
-    rgba(0, 184, 148, 0.1),
-    rgba(0, 184, 148, 0.2)
-  );
-  border-left: 4px solid var(--success-color);
-  color: var(--success-color);
-}
-
-.alert-info {
-  background: linear-gradient(
-    to right,
-    rgba(0, 206, 201, 0.1),
-    rgba(0, 206, 201, 0.2)
-  );
-  border-left: 4px solid var(--secondary-color);
-  color: var(--secondary-color);
-  font-weight: 600;
-}
-
-/* Chart Styling */
-#categoryChart {
-  max-width: 250px;
-  height: 250px;
-  margin: 0 auto;
-  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.1));
-}
-
-/* Chart container styling */
-.chart-container {
-  background-color: rgba(255, 255, 255, 0.7);
-  border-radius: 10px;
-  padding: 15px;
-  box-shadow: inset 0 0 10px rgba(108, 92, 231, 0.05);
-}
-
-/* Enhanced Modal Styling */
+/* ----------------- Modals ----------------- */
 .modal-content {
   border-radius: 15px;
   border: none;
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
 }
 
 .modal-header {
@@ -301,97 +143,78 @@ h4 {
     var(--secondary-color)
   );
   color: white;
-  border-bottom: none;
-  padding: 20px;
 }
 
-.modal-title {
-  font-weight: 600;
+/* ----------------- Charts ----------------- */
+.chart-container {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 1.5rem;
 }
 
-.modal-body {
-  padding: 20px;
-}
-
-.modal-footer {
-  border-top: none;
-  padding: 15px 20px 20px;
-}
-
-.btn-close {
+/* ================ UTILITY CLASSES ================ */
+.category-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
   color: white;
-  text-shadow: none;
-  opacity: 0.8;
+
+  &--food {
+    background-color: var(--food-color);
+  }
+  &--transport {
+    background-color: var(--transport-color);
+  }
+  &--shopping {
+    background-color: var(--shopping-color);
+  }
+  &--other {
+    background-color: var(--other-color);
+  }
 }
 
-.btn-close:hover {
-  opacity: 1;
+.status-message {
+  border-radius: 10px;
+  padding: 1rem;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+
+  &--success {
+    background: linear-gradient(
+      to right,
+      rgba(0, 184, 148, 0.1),
+      rgba(0, 184, 148, 0.2)
+    );
+    border-left: 4px solid var(--success-color);
+  }
+
+  &--info {
+    background: linear-gradient(
+      to right,
+      rgba(0, 206, 201, 0.1),
+      rgba(0, 206, 201, 0.2)
+    );
+    border-left: 4px solid var(--secondary-color);
+  }
 }
 
-/* Enhanced Action Buttons in Table */
-.action-btn {
-  padding: 6px 12px;
-  font-size: 0.875rem;
-  margin-right: 5px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.edit-btn {
-  background-color: var(--warning-color);
-  color: var(--dark-text);
-  border: none;
-}
-
-.edit-btn:hover {
-  background-color: #f0b055;
-  transform: translateY(-2px);
-}
-
-.delete-btn {
-  background-color: var(--danger-color);
-  color: white;
-  border: none;
-}
-
-.delete-btn:hover {
-  background-color: #d35400;
-  transform: translateY(-2px);
-}
-
-/* Responsive Design */
+/* ================ RESPONSIVE DESIGN ================ */
 @media (max-width: 768px) {
   .card {
-    padding: 15px;
+    padding: 1rem;
   }
 
-  canvas#categoryChart {
-    max-width: 65% !important;
-    height: auto !important;
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .table {
-    font-size: 0.9rem;
-  }
-
-  .table thead th {
-    padding: 10px;
-  }
-
-  .table tbody td {
-    padding: 10px;
-  }
-
-  .category-food,
-  .category-transport,
-  .category-shopping,
-  .category-other {
-    padding: 3px 8px;
-    font-size: 0.8rem;
+  .chart-container {
+    padding: 1rem;
   }
 }
 
-/* Animation for message */
+/* ================ ANIMATIONS ================ */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -415,72 +238,20 @@ h4 {
   }
 }
 
-#message {
+.animate-fade-in {
   animation: fadeIn 0.5s ease-in-out;
 }
-
-/* Total expense highlight */
-#total-expense {
-  position: relative;
-  overflow: hidden;
+.animate-pulse {
+  animation: pulse 2s infinite;
 }
-
-#total-expense::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    135deg,
-    rgba(108, 92, 231, 0.1) 0%,
-    rgba(0, 206, 201, 0.1) 100%
-  );
-  z-index: -1;
+#totalDisplay .alert {
+  max-width: 400px;
+  background-color: #eaf2ff;
+  border: 2px solid var(--primary-color);
+  border-radius: 12px;
 }
 
 #total-amount {
-  font-weight: 700;
+  font-size: 2.5rem;
   color: var(--primary-color);
-  font-size: 1.2em;
-  animation: pulse 2s infinite;
-  display: inline-block;
-  padding: 0 5px;
-}
-
-/* Additional styling for category summary table */
-#category-summary td:last-child {
-  font-weight: 600;
-}
-
-#category-summary tr:hover {
-  background-color: rgba(108, 92, 231, 0.05);
-}
-
-/* Make the add expense button more prominent */
-#expense-form button[type="submit"] {
-  margin-top: 10px;
-  background: linear-gradient(
-    to right,
-    var(--primary-color),
-    var(--accent-color)
-  );
-}
-
-#expense-form button[type="submit"]:hover {
-  background: linear-gradient(
-    to right,
-    var(--accent-color),
-    var(--primary-color)
-  );
-}
-
-/* Adding some JS helper classes that you can use later */
-.fade-in {
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-.expense-highlight {
-  animation: pulse 1s;
 }
