@@ -1,9 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
   const API_URL =
-  window.location.hostname.includes("azurestaticapps.net") ||
-  window.location.hostname.includes("azurewebsites.net")
-    ? "https://personal-expense-tracker-backend-e3bqg3d6buc2h8fx.northeurope-01.azurewebsites.net"
-    : "http://localhost:5000";
+    window.location.hostname.includes("azurestaticapps.net") ||
+    window.location.hostname.includes("azurewebsites.net") ||
+    window.location.hostname.includes("web.core.windows.net")
+      ? "https://personal-expense-tracker-backend-e3bqg3d6buc2h8fx.northeurope-01.azurewebsites.net"
+      : "http://localhost:5000";
+
 
   const mainContent = document.getElementById("mainContent");
   const authButtons = document.getElementById("authButtons");
