@@ -244,11 +244,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!res.ok) throw new Error(data.error || "Delete failed");
 
       showMessage("Expense deleted", "success");
-      await Promise.all([
+      const [updatedExpenses] = await Promise.all([
         fetchExpenses(),
         fetchCategorySummary(),
         fetchTotalExpenses(),
       ]);
+      renderExpenses(updatedExpenses);
     } catch (error) {
       showMessage("Delete failed", "danger");
       console.error("Delete error:", error);
@@ -299,11 +300,12 @@ document.addEventListener("DOMContentLoaded", () => {
         bootstrap.Modal.getInstance(
           document.getElementById("editExpenseModal")
         ).hide();
-        await Promise.all([
+        const [updatedExpenses] = await Promise.all([
           fetchExpenses(),
           fetchCategorySummary(),
           fetchTotalExpenses(),
         ]);
+        renderExpenses(updatedExpenses);
       } catch (error) {
         showMessage("Edit failed", "danger");
         console.error("Edit error:", error);
