@@ -230,7 +230,36 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
   // ------------------ DELETE & EDIT FUNCTIONS ------------------
+  function showConfirmBootstrap(expenseId) {
+    return new Promise((resolve) => {
+      const deleteModal = new bootstrap.Modal(
+        document.getElementById("deleteModal")
+      );
+      const confirmBtn = document.getElementById("confirmDeleteBtn");
+      const cancelBtns = document.querySelectorAll('[data-bs-dismiss="modal"]');
+
+      // Store expenseId in hidden input
+      document.getElementById("delete-expense-id").value = expenseId;
+
+      const onConfirm = () => {
+        confirmBtn.removeEventListener("click", onConfirm);
+        resolve(true);
+      };
+
+      // If user cancels
+      cancelBtns.forEach((btn) => {
+        btn.addEventListener("click", () => resolve(false), { once: true });
+      });
+
+      confirmBtn.addEventListener("click", onConfirm, { once: true });
+
+      deleteModal.show();
+    });
+  }
   async function handleDeleteExpense(expenseId) {
+    const confirm = await showConfirmBootstrap(expenseId);
+    if (!confirm) return;
+
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(`${API_URL}/expenses/${expenseId}`, {
