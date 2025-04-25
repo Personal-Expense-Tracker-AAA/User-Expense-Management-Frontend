@@ -154,11 +154,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateUIForAuthenticated() {
     mainContent.classList.remove("d-none");
+    document.getElementById("userEmailDisplay").textContent = currentUser.email;
+
     authButtons.innerHTML = `
-      <span class="me-3">Welcome, ${currentUser.email}</span>
-      <button class="btn btn-danger" id="logoutBtn">Logout</button>
-    `;
-    // Add the event listener for the new logout button
+        <button class="btn btn-sm btn-outline-danger" id="logoutBtn">
+          <i class="fas fa-sign-out-alt me-1"></i>Logout
+        </button>
+      `;
+
     document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("token");
       currentUser = null;
@@ -302,12 +305,65 @@ document.addEventListener("DOMContentLoaded", () => {
       deleteModal.show();
     });
   }
-  async function handleDeleteExpense(expenseId) {
-    const confirm = await showConfirmBootstrap(expenseId);
-    if (!confirm) return;
 
-    const token = localStorage.getItem("token");
+  function showConfirmBootstrap(expenseId) {
+    return new Promise((resolve) => {
+      // Get the modal instance
+      const deleteModal = new bootstrap.Modal(
+        document.getElementById("deleteModal")
+      );
+
+      // Set the expense ID in the hidden field
+      document.getElementById("delete-expense-id").value = expenseId;
+
+      // Create temporary click handler for confirm button
+      const handleConfirm = () => {
+        // Clean up event listeners
+        confirmBtn.removeEventListener("click", handleConfirm);
+        deleteModal._element.removeEventListener(
+          "hidden.bs.modal",
+          handleCancel
+        );
+
+        // Hide the modal
+        deleteModal.hide();
+
+        // Resolve the promise with true (confirmed)
+        resolve(true);
+      };
+
+      // Create cancel handler
+      const handleCancel = () => {
+        // Clean up event listeners
+        confirmBtn.removeEventListener("click", handleConfirm);
+        deleteModal._element.removeEventListener(
+          "hidden.bs.modal",
+          handleCancel
+        );
+
+        // Resolve the promise with false (cancelled)
+        resolve(false);
+      };
+
+      // Get the confirm button
+      const confirmBtn = document.getElementById("confirmDeleteBtn");
+
+      // Add event listeners
+      confirmBtn.addEventListener("click", handleConfirm);
+      deleteModal._element.addEventListener("hidden.bs.modal", handleCancel);
+
+      // Show the modal
+      deleteModal.show();
+    });
+  }
+
+  async function handleDeleteExpense(expenseId) {
     try {
+      const confirm = await showConfirmBootstrap(expenseId);
+      if (!confirm) return;
+
+      const token = localStorage.getItem("token");
+
       const res = await fetch(`${API_URL}/expenses/${expenseId}`, {
         method: "DELETE",
         headers: {
@@ -318,6 +374,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Delete failed");
 
+      // Close the modal before showing success message
+      const deleteModal = bootstrap.Modal.getInstance(
+        document.getElementById("deleteModal")
+      );
+      if (deleteModal) {
+        deleteModal.hide();
+      }
       showMessage("Expense deleted", "success");
       const [updatedExpenses] = await Promise.all([
         fetchExpenses(),
@@ -706,19 +769,46 @@ document.addEventListener("DOMContentLoaded", () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = await res.json();
 
+      // First check if response is OK
       if (!res.ok) {
-        throw new Error(data.error || "Failed to fetch total");
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
+
+      // Try to parse JSON
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        throw new Error("Invalid JSON response");
+      }
+
+      // Safely extract total amount
+      const totalAmount = parseFloat(data?.total) || 0;
+
+      // Update UI
       const totalExpenseValue = document.getElementById("total-expense-value");
       if (totalExpenseValue) {
-        totalExpenseValue.textContent = `€${Number(data.total).toFixed(2)}`;
+        totalExpenseValue.textContent = `€${totalAmount.toFixed(2)}`;
       }
+
+      // Update budget progress if elements exist
+      const budgetProgress = document.getElementById("budgetProgress");
+      const budgetText = document.getElementById("budgetText");
+      if (budgetProgress && budgetText) {
+        const budget = 300; // Your budget value
+        const percentage = Math.min((totalAmount / budget) * 100, 100);
+        budgetProgress.style.width = `${percentage}%`;
+        budgetText.textContent = `€${totalAmount.toFixed(
+          2
+        )} of €${budget.toFixed(2)} budget`;
+      }
+
+      return totalAmount;
     } catch (error) {
-      showMessage("Network error - please check connection", "danger");
-      console.error("Fetch error:", error);
-      throw error; // Keep to maintain error propagation
+      console.error("Failed to fetch total expenses:", error);
+      showMessage("Error loading expense data", "danger");
+      return 0; // Return default value
     }
   }
   // ------------------ ADD EXPENSE ------------------
@@ -855,10 +945,46 @@ window.logout = () => {
   showMessage("Logged out successfully", "success");
 };
 function showMessage(text, type) {
-  const messageEl = document.getElementById("message");
-  messageEl.textContent = text;
-  messageEl.className = `alert alert-${type} d-block`;
-  setTimeout(() => messageEl.classList.add("d-none"), 3000);
+  const toastContainer = document.getElementById("toastContainer");
+
+  // Create toast element
+  const toastEl = document.createElement("div");
+  toastEl.className = `toast show align-items-center text-white bg-${type} border-0`;
+  toastEl.setAttribute("role", "alert");
+  toastEl.setAttribute("aria-live", "assertive");
+  toastEl.setAttribute("aria-atomic", "true");
+
+  // Toast content
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="fas ${
+          type === "success"
+            ? "fa-check-circle"
+            : type === "danger"
+            ? "fa-exclamation-circle"
+            : "fa-info-circle"
+        } me-2"></i>
+        ${text}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+
+  // Add to container
+  toastContainer.appendChild(toastEl);
+
+  // Initialize Bootstrap toast
+  const toast = new bootstrap.Toast(toastEl, {
+    autohide: true,
+    delay: 3000,
+  });
+  toast.show();
+
+  // Remove after hide
+  toastEl.addEventListener("hidden.bs.toast", () => {
+    toastEl.remove();
+  });
 }
 function showLoading(show = true) {
   const loader = document.getElementById("loader");
