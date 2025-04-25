@@ -219,28 +219,75 @@
         <div class="card p-3">
           <div class="card-body">
             <h3 class="card-title text-center mb-4" id="visualizationHeading">
-              Category Breakdown
+              Expense Analysis Dashboard
             </h3>
-            <div class="row justify-content-center">
+
+            <!-- Chart Row 1 -->
+            <div class="row mb-4">
+              <div class="col-md-6 mb-4 mb-md-0">
+                <div
+                  class="chart-container"
+                  style="position: relative; height: 300px"
+                >
+                  <canvas
+                    id="pieChartCanvas"
+                    aria-label="Expense category distribution chart"
+                  ></canvas>
+                </div>
+              </div>
               <div class="col-md-6">
-                <canvas
-                  id="chartCanvas"
-                  class="w-100"
-                  style="height: auto"
-                  tabindex="-1"
-                  aria-label="Expense category distribution chart"
-                ></canvas>
+                <div
+                  class="chart-container"
+                  style="position: relative; height: 300px"
+                >
+                  <canvas
+                    id="doughnutChartCanvas"
+                    aria-label="Expense category doughnut chart"
+                  ></canvas>
+                </div>
               </div>
             </div>
+
+            <!-- Chart Row 2 -->
+            <div class="row">
+              <div class="col-md-6 mb-4 mb-md-0">
+                <div
+                  class="chart-container"
+                  style="position: relative; height: 300px"
+                >
+                  <canvas
+                    id="barChartCanvas"
+                    aria-label="Expense category bar chart"
+                  ></canvas>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div
+                  class="chart-container"
+                  style="position: relative; height: 300px"
+                >
+                  <canvas
+                    id="polarAreaChartCanvas"
+                    aria-label="Expense category polar area chart"
+                  ></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Table -->
             <div class="mt-4">
-              <table class="table" aria-describedby="categorySummaryTableDesc">
+              <table
+                class="table table-striped table-hover"
+                aria-describedby="categorySummaryTableDesc"
+              >
                 <caption id="categorySummaryTableDesc" class="visually-hidden">
                   Detailed breakdown of expenses by category
                 </caption>
-                <thead>
+                <thead class="table-dark">
                   <tr>
                     <th scope="col">Category</th>
                     <th scope="col">Total (€)</th>
+                    <th scope="col">Percentage</th>
                   </tr>
                 </thead>
                 <tbody id="category-summary"></tbody>
@@ -249,6 +296,7 @@
           </div>
         </div>
       </section>
+
       <!-- Expense List Section -->
       <section aria-labelledby="expenseListHeading" class="mt-5">
         <div class="card p-3">

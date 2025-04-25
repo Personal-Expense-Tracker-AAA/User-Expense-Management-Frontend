@@ -340,6 +340,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Edit error:", error);
       }
     });
+  // ------------------ CATEGORY SUMMARY ------------------
   async function fetchCategorySummary() {
     const token = localStorage.getItem("token");
     try {
@@ -357,49 +358,289 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       console.log("Category summary:", data);
-      // Update the chart
-      const chartCanvas = document.getElementById("chartCanvas");
-      if (!chartCanvas) return;
 
-      const ctx = chartCanvas.getContext("2d");
-
-      // Destroy old chart if it exists
-      if (window.categoryChart) {
-        window.categoryChart.destroy();
-      }
-
-      // Extract labels and numeric values
+      // Extract labels and values
       const labels = data.map((item) => item.category);
       const values = data.map((item) => parseFloat(item.total));
-      //  Create new chart
-      window.categoryChart = new Chart(ctx, {
+      const total = values.reduce((sum, value) => sum + value, 0);
+
+      // Generate a more sophisticated color palette
+      const generateColors = (count) => {
+        const colors = [];
+        const hueStep = 360 / count;
+        for (let i = 0; i < count; i++) {
+          const hue = i * hueStep;
+          colors.push(`hsl(${hue}, 70%, 60%)`);
+        }
+        return colors;
+      };
+
+      const chartColors = generateColors(labels.length);
+      const borderColor = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "#2c2c2c"
+        : "#ffffff";
+
+      // Destroy old charts if they exist
+      if (window.pieChart) window.pieChart.destroy();
+      if (window.doughnutChart) window.doughnutChart.destroy();
+      if (window.barChart) window.barChart.destroy();
+      if (window.polarAreaChart) window.polarAreaChart.destroy();
+
+      // 1. Enhanced Pie Chart
+      const pieCtx = document.getElementById("pieChartCanvas").getContext("2d");
+      window.pieChart = new Chart(pieCtx, {
         type: "pie",
         data: {
-          labels: labels,
+          labels,
           datasets: [
             {
               data: values,
-              backgroundColor: ["#ff6384", "#36a2eb", "#cc65fe", "#ffce56"],
+              backgroundColor: chartColors,
+              borderColor: borderColor,
+              borderWidth: 2,
+              hoverOffset: 15,
             },
           ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                color: "#333",
+                font: {
+                  size: 12,
+                  weight: "bold",
+                },
+                padding: 20,
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const percentage = ((context.raw / total) * 100).toFixed(1);
+                  return `${context.label}: €${context.raw.toFixed(
+                    2
+                  )} (${percentage}%)`;
+                },
+              },
+            },
+            title: {
+              display: true,
+              text: "Expense Distribution",
+              font: {
+                size: 16,
+                weight: "bold",
+              },
+            },
+          },
+          animation: {
+            animateScale: true,
+            animateRotate: true,
+          },
         },
       });
-      // Update the category summary table
+
+      // 2. Doughnut Chart
+      const doughnutCtx = document
+        .getElementById("doughnutChartCanvas")
+        .getContext("2d");
+      window.doughnutChart = new Chart(doughnutCtx, {
+        type: "doughnut",
+        data: {
+          labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: chartColors,
+              borderColor: borderColor,
+              borderWidth: 2,
+              hoverOffset: 15,
+              cutout: "65%",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                color: "#333",
+                font: {
+                  size: 12,
+                  weight: "bold",
+                },
+                padding: 20,
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const percentage = ((context.raw / total) * 100).toFixed(1);
+                  return `${context.label}: €${context.raw.toFixed(
+                    2
+                  )} (${percentage}%)`;
+                },
+              },
+            },
+            title: {
+              display: true,
+              text: "Expense Breakdown",
+              font: {
+                size: 16,
+                weight: "bold",
+              },
+            },
+          },
+          animation: {
+            animateScale: true,
+            animateRotate: true,
+          },
+        },
+      });
+
+      // 3. Bar Chart
+      const barCtx = document.getElementById("barChartCanvas").getContext("2d");
+      window.barChart = new Chart(barCtx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Expenses (€)",
+              data: values,
+              backgroundColor: chartColors.map((color) =>
+                color.replace("60%)", "70%)")
+              ),
+              borderColor: borderColor,
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function (value) {
+                  return "€" + value;
+                },
+              },
+            },
+          },
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  return `€${context.raw.toFixed(2)}`;
+                },
+              },
+            },
+            title: {
+              display: true,
+              text: "Expense by Category",
+              font: {
+                size: 16,
+                weight: "bold",
+              },
+            },
+          },
+        },
+      });
+
+      // 4. Polar Area Chart
+      const polarCtx = document
+        .getElementById("polarAreaChartCanvas")
+        .getContext("2d");
+      window.polarAreaChart = new Chart(polarCtx, {
+        type: "polarArea",
+        data: {
+          labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: chartColors.map((color) =>
+                color.replace("60%)", "80%)")
+              ),
+              borderColor: borderColor,
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                color: "#333",
+                font: {
+                  size: 12,
+                  weight: "bold",
+                },
+                padding: 20,
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const percentage = ((context.raw / total) * 100).toFixed(1);
+                  return `${context.label}: €${context.raw.toFixed(
+                    2
+                  )} (${percentage}%)`;
+                },
+              },
+            },
+            title: {
+              display: true,
+              text: "Category Comparison",
+              font: {
+                size: 16,
+                weight: "bold",
+              },
+            },
+          },
+          scales: {
+            r: {
+              ticks: {
+                display: false,
+              },
+            },
+          },
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+          },
+        },
+      });
+
+      // Update the category summary table with percentages
       const categorySummaryTable = document.getElementById("category-summary");
       if (categorySummaryTable) {
         categorySummaryTable.innerHTML = data
-          .map(
-            (item) => `
-          <tr>
-            <td>${item.category}</td>
-            <td>€${Number(item.total).toFixed(2)}</td>
-          </tr>
-        `
-          )
+          .map((item) => {
+            const percentage = (parseFloat(item.total) / total) * 100;
+            return `
+            <tr>
+              <td><span class="badge" style="background-color: ${
+                chartColors[data.indexOf(item)]
+              }">${item.category}</span></td>
+              <td><strong>€${Number(item.total).toFixed(2)}</strong></td>
+              <td>${percentage.toFixed(1)}%</td>
+            </tr>
+          `;
+          })
           .join("");
       }
     } catch (error) {
@@ -409,6 +650,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ------------------ TOTAL EXPENSES ------------------
   async function fetchTotalExpenses() {
     const token = localStorage.getItem("token");
     try {
