@@ -74,11 +74,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ------------------ AUTH STATE MGMT ------------------
 
+  // Update your checkAuthState function
   function checkAuthState() {
     const token = localStorage.getItem("token");
+    const heroSection = document.getElementById("heroSection");
+
     if (!token) {
-      dataLoaded = false; // Reset flag on logout
+      dataLoaded = false;
       updateUIForUnauthenticated();
+      document.body.classList.remove("authenticated");
+      if (heroSection) heroSection.style.display = "flex";
       return;
     }
 
@@ -93,7 +98,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       currentUser = payload;
       updateUIForAuthenticated();
-      // Only load data once per auth session
+      document.body.classList.add("authenticated");
+      if (heroSection) heroSection.style.display = "none";
+
       if (!dataLoaded) {
         dataLoaded = true;
         loadData();
@@ -103,8 +110,47 @@ document.addEventListener("DOMContentLoaded", () => {
       showMessage(`Session expired: ${error.message}`, "warning");
       localStorage.removeItem("token");
       updateUIForUnauthenticated();
+      document.body.classList.remove("authenticated");
+      if (heroSection) heroSection.style.display = "flex";
     }
   }
+
+  // Add password strength indicator
+  document
+    .getElementById("signupPassword")
+    ?.addEventListener("input", function () {
+      const password = this.value;
+      const strengthBar = document.querySelector(
+        ".password-strength .progress-bar"
+      );
+      const strengthText = document.getElementById("strengthText");
+
+      let strength = 0;
+
+      // Length check
+      if (password.length > 7) strength += 25;
+      if (password.length > 11) strength += 25;
+
+      // Complexity checks
+      if (/[A-Z]/.test(password)) strength += 15;
+      if (/[0-9]/.test(password)) strength += 15;
+      if (/[^A-Za-z0-9]/.test(password)) strength += 20;
+
+      strength = Math.min(strength, 100);
+      strengthBar.style.width = strength + "%";
+
+      // Update text and color
+      if (strength < 40) {
+        strengthBar.className = "progress-bar bg-danger";
+        strengthText.textContent = "Weak";
+      } else if (strength < 70) {
+        strengthBar.className = "progress-bar bg-warning";
+        strengthText.textContent = "Moderate";
+      } else {
+        strengthBar.className = "progress-bar bg-success";
+        strengthText.textContent = "Strong";
+      }
+    });
 
   function updateUIForAuthenticated() {
     mainContent.classList.remove("d-none");

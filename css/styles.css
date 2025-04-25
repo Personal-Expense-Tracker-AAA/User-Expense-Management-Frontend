@@ -1,3 +1,55 @@
+/* Auth Page Specific Styles */
+.auth-page {
+  background-color: #f8f9fa;
+}
+
+.hero-section {
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
+  color: white;
+  padding: 5rem 0;
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+}
+
+.hero-content h1 {
+  font-weight: 700;
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero-content p {
+  font-size: 1.25rem;
+  max-width: 80%;
+}
+
+.hero-image img {
+  max-height: 400px;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+}
+
+/* Modal Enhancements */
+.modal-content {
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+}
+
+.password-strength .progress-bar {
+  transition: width 0.3s ease;
+}
+
+/* Hide hero section when authenticated */
+body.authenticated .hero-section {
+  display: none;
+}
 /* ================ CORE VARIABLES ================ */
 :root {
   /* Primary Colors */
