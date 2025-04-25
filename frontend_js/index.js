@@ -81,11 +81,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ------------------ AUTH STATE MGMT ------------------
 
+  // Update your checkAuthState function
   function checkAuthState() {
     const token = localStorage.getItem("token");
+    const heroSection = document.getElementById("heroSection");
+
     if (!token) {
-      dataLoaded = false; // Reset flag on logout
+      dataLoaded = false;
       updateUIForUnauthenticated();
+      document.body.classList.remove("authenticated");
+      if (heroSection) heroSection.style.display = "flex";
       return;
     }
 
@@ -100,7 +105,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       currentUser = payload;
       updateUIForAuthenticated();
-      // Only load data once per auth session
+      document.body.classList.add("authenticated");
+      if (heroSection) heroSection.style.display = "none";
+
       if (!dataLoaded) {
         dataLoaded = true;
         loadData();
@@ -110,16 +117,58 @@ document.addEventListener("DOMContentLoaded", () => {
       showMessage(`Session expired: ${error.message}`, "warning");
       localStorage.removeItem("token");
       updateUIForUnauthenticated();
+      document.body.classList.remove("authenticated");
+      if (heroSection) heroSection.style.display = "flex";
     }
   }
 
+  // Add password strength indicator
+  document
+    .getElementById("signupPassword")
+    ?.addEventListener("input", function () {
+      const password = this.value;
+      const strengthBar = document.querySelector(
+        ".password-strength .progress-bar"
+      );
+      const strengthText = document.getElementById("strengthText");
+
+      let strength = 0;
+
+      // Length check
+      if (password.length > 7) strength += 25;
+      if (password.length > 11) strength += 25;
+
+      // Complexity checks
+      if (/[A-Z]/.test(password)) strength += 15;
+      if (/[0-9]/.test(password)) strength += 15;
+      if (/[^A-Za-z0-9]/.test(password)) strength += 20;
+
+      strength = Math.min(strength, 100);
+      strengthBar.style.width = strength + "%";
+
+      // Update text and color
+      if (strength < 40) {
+        strengthBar.className = "progress-bar bg-danger";
+        strengthText.textContent = "Weak";
+      } else if (strength < 70) {
+        strengthBar.className = "progress-bar bg-warning";
+        strengthText.textContent = "Moderate";
+      } else {
+        strengthBar.className = "progress-bar bg-success";
+        strengthText.textContent = "Strong";
+      }
+    });
+
   function updateUIForAuthenticated() {
     mainContent.classList.remove("d-none");
+    document.getElementById("userEmailDisplay").textContent = currentUser.email;
+
     authButtons.innerHTML = `
-      <span class="me-3">Welcome, ${currentUser.email}</span>
-      <button class="btn btn-danger" id="logoutBtn">Logout</button>
-    `;
-    // Add the event listener for the new logout button
+        <button class="btn btn-sm btn-outline-danger" id="logoutBtn">
+          <i class="fas fa-sign-out-alt me-1"></i>Logout
+        </button>
+      `;
+
     document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("token");
       currentUser = null;
@@ -237,9 +286,91 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
   // ------------------ DELETE & EDIT FUNCTIONS ------------------
+  function showConfirmBootstrap(expenseId) {
+    return new Promise((resolve) => {
+      const deleteModal = new bootstrap.Modal(
+        document.getElementById("deleteModal")
+      );
+      const confirmBtn = document.getElementById("confirmDeleteBtn");
+      const cancelBtns = document.querySelectorAll('[data-bs-dismiss="modal"]');
+
+      // Store expenseId in hidden input
+      document.getElementById("delete-expense-id").value = expenseId;
+
+      const onConfirm = () => {
+        confirmBtn.removeEventListener("click", onConfirm);
+        resolve(true);
+      };
+
+      // If user cancels
+      cancelBtns.forEach((btn) => {
+        btn.addEventListener("click", () => resolve(false), { once: true });
+      });
+
+      confirmBtn.addEventListener("click", onConfirm, { once: true });
+
+      deleteModal.show();
+    });
+  }
+
+  function showConfirmBootstrap(expenseId) {
+    return new Promise((resolve) => {
+      // Get the modal instance
+      const deleteModal = new bootstrap.Modal(
+        document.getElementById("deleteModal")
+      );
+
+      // Set the expense ID in the hidden field
+      document.getElementById("delete-expense-id").value = expenseId;
+
+      // Create temporary click handler for confirm button
+      const handleConfirm = () => {
+        // Clean up event listeners
+        confirmBtn.removeEventListener("click", handleConfirm);
+        deleteModal._element.removeEventListener(
+          "hidden.bs.modal",
+          handleCancel
+        );
+
+        // Hide the modal
+        deleteModal.hide();
+
+        // Resolve the promise with true (confirmed)
+        resolve(true);
+      };
+
+      // Create cancel handler
+      const handleCancel = () => {
+        // Clean up event listeners
+        confirmBtn.removeEventListener("click", handleConfirm);
+        deleteModal._element.removeEventListener(
+          "hidden.bs.modal",
+          handleCancel
+        );
+
+        // Resolve the promise with false (cancelled)
+        resolve(false);
+      };
+
+      // Get the confirm button
+      const confirmBtn = document.getElementById("confirmDeleteBtn");
+
+      // Add event listeners
+      confirmBtn.addEventListener("click", handleConfirm);
+      deleteModal._element.addEventListener("hidden.bs.modal", handleCancel);
+
+      // Show the modal
+      deleteModal.show();
+    });
+  }
+
   async function handleDeleteExpense(expenseId) {
-    const token = localStorage.getItem("token");
     try {
+      const confirm = await showConfirmBootstrap(expenseId);
+      if (!confirm) return;
+
+      const token = localStorage.getItem("token");
+
       const res = await fetch(`${API_URL}/expenses/${expenseId}`, {
         method: "DELETE",
         headers: {
@@ -250,12 +381,20 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Delete failed");
 
+      // Close the modal before showing success message
+      const deleteModal = bootstrap.Modal.getInstance(
+        document.getElementById("deleteModal")
+      );
+      if (deleteModal) {
+        deleteModal.hide();
+      }
       showMessage("Expense deleted", "success");
-      await Promise.all([
+      const [updatedExpenses] = await Promise.all([
         fetchExpenses(),
         fetchCategorySummary(),
         fetchTotalExpenses(),
       ]);
+      renderExpenses(updatedExpenses);
     } catch (error) {
       showMessage("Delete failed", "danger");
       console.error("Delete error:", error);
@@ -306,16 +445,18 @@ document.addEventListener("DOMContentLoaded", () => {
         bootstrap.Modal.getInstance(
           document.getElementById("editExpenseModal")
         ).hide();
-        await Promise.all([
+        const [updatedExpenses] = await Promise.all([
           fetchExpenses(),
           fetchCategorySummary(),
           fetchTotalExpenses(),
         ]);
+        renderExpenses(updatedExpenses);
       } catch (error) {
         showMessage("Edit failed", "danger");
         console.error("Edit error:", error);
       }
     });
+  // ------------------ CATEGORY SUMMARY ------------------
   async function fetchCategorySummary() {
     const token = localStorage.getItem("token");
     try {
@@ -333,49 +474,289 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       console.log("Category summary:", data);
-      // Update the chart
-      const chartCanvas = document.getElementById("chartCanvas");
-      if (!chartCanvas) return;
 
-      const ctx = chartCanvas.getContext("2d");
-
-      // Destroy old chart if it exists
-      if (window.categoryChart) {
-        window.categoryChart.destroy();
-      }
-
-      // Extract labels and numeric values
+      // Extract labels and values
       const labels = data.map((item) => item.category);
       const values = data.map((item) => parseFloat(item.total));
-      //  Create new chart
-      window.categoryChart = new Chart(ctx, {
+      const total = values.reduce((sum, value) => sum + value, 0);
+
+      // Generate a more sophisticated color palette
+      const generateColors = (count) => {
+        const colors = [];
+        const hueStep = 360 / count;
+        for (let i = 0; i < count; i++) {
+          const hue = i * hueStep;
+          colors.push(`hsl(${hue}, 70%, 60%)`);
+        }
+        return colors;
+      };
+
+      const chartColors = generateColors(labels.length);
+      const borderColor = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "#2c2c2c"
+        : "#ffffff";
+
+      // Destroy old charts if they exist
+      if (window.pieChart) window.pieChart.destroy();
+      if (window.doughnutChart) window.doughnutChart.destroy();
+      if (window.barChart) window.barChart.destroy();
+      if (window.polarAreaChart) window.polarAreaChart.destroy();
+
+      // 1. Enhanced Pie Chart
+      const pieCtx = document.getElementById("pieChartCanvas").getContext("2d");
+      window.pieChart = new Chart(pieCtx, {
         type: "pie",
         data: {
-          labels: labels,
+          labels,
           datasets: [
             {
               data: values,
-              backgroundColor: ["#ff6384", "#36a2eb", "#cc65fe", "#ffce56"],
+              backgroundColor: chartColors,
+              borderColor: borderColor,
+              borderWidth: 2,
+              hoverOffset: 15,
             },
           ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                color: "#333",
+                font: {
+                  size: 12,
+                  weight: "bold",
+                },
+                padding: 20,
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const percentage = ((context.raw / total) * 100).toFixed(1);
+                  return `${context.label}: €${context.raw.toFixed(
+                    2
+                  )} (${percentage}%)`;
+                },
+              },
+            },
+            title: {
+              display: true,
+              text: "Expense Distribution",
+              font: {
+                size: 16,
+                weight: "bold",
+              },
+            },
+          },
+          animation: {
+            animateScale: true,
+            animateRotate: true,
+          },
         },
       });
-      // Update the category summary table
+
+      // 2. Doughnut Chart
+      const doughnutCtx = document
+        .getElementById("doughnutChartCanvas")
+        .getContext("2d");
+      window.doughnutChart = new Chart(doughnutCtx, {
+        type: "doughnut",
+        data: {
+          labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: chartColors,
+              borderColor: borderColor,
+              borderWidth: 2,
+              hoverOffset: 15,
+              cutout: "65%",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                color: "#333",
+                font: {
+                  size: 12,
+                  weight: "bold",
+                },
+                padding: 20,
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const percentage = ((context.raw / total) * 100).toFixed(1);
+                  return `${context.label}: €${context.raw.toFixed(
+                    2
+                  )} (${percentage}%)`;
+                },
+              },
+            },
+            title: {
+              display: true,
+              text: "Expense Breakdown",
+              font: {
+                size: 16,
+                weight: "bold",
+              },
+            },
+          },
+          animation: {
+            animateScale: true,
+            animateRotate: true,
+          },
+        },
+      });
+
+      // 3. Bar Chart
+      const barCtx = document.getElementById("barChartCanvas").getContext("2d");
+      window.barChart = new Chart(barCtx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Expenses (€)",
+              data: values,
+              backgroundColor: chartColors.map((color) =>
+                color.replace("60%)", "70%)")
+              ),
+              borderColor: borderColor,
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function (value) {
+                  return "€" + value;
+                },
+              },
+            },
+          },
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  return `€${context.raw.toFixed(2)}`;
+                },
+              },
+            },
+            title: {
+              display: true,
+              text: "Expense by Category",
+              font: {
+                size: 16,
+                weight: "bold",
+              },
+            },
+          },
+        },
+      });
+
+      // 4. Polar Area Chart
+      const polarCtx = document
+        .getElementById("polarAreaChartCanvas")
+        .getContext("2d");
+      window.polarAreaChart = new Chart(polarCtx, {
+        type: "polarArea",
+        data: {
+          labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: chartColors.map((color) =>
+                color.replace("60%)", "80%)")
+              ),
+              borderColor: borderColor,
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                color: "#333",
+                font: {
+                  size: 12,
+                  weight: "bold",
+                },
+                padding: 20,
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const percentage = ((context.raw / total) * 100).toFixed(1);
+                  return `${context.label}: €${context.raw.toFixed(
+                    2
+                  )} (${percentage}%)`;
+                },
+              },
+            },
+            title: {
+              display: true,
+              text: "Category Comparison",
+              font: {
+                size: 16,
+                weight: "bold",
+              },
+            },
+          },
+          scales: {
+            r: {
+              ticks: {
+                display: false,
+              },
+            },
+          },
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+          },
+        },
+      });
+
+      // Update the category summary table with percentages
       const categorySummaryTable = document.getElementById("category-summary");
       if (categorySummaryTable) {
         categorySummaryTable.innerHTML = data
-          .map(
-            (item) => `
-          <tr>
-            <td>${item.category}</td>
-            <td>€${Number(item.total).toFixed(2)}</td>
-          </tr>
-        `
-          )
+          .map((item) => {
+            const percentage = (parseFloat(item.total) / total) * 100;
+            return `
+            <tr>
+              <td><span class="badge" style="background-color: ${
+                chartColors[data.indexOf(item)]
+              }">${item.category}</span></td>
+              <td><strong>€${Number(item.total).toFixed(2)}</strong></td>
+              <td>${percentage.toFixed(1)}%</td>
+            </tr>
+          `;
+          })
           .join("");
       }
     } catch (error) {
@@ -385,6 +766,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ------------------ TOTAL EXPENSES ------------------
   async function fetchTotalExpenses() {
     const token = localStorage.getItem("token");
     try {
@@ -394,19 +776,46 @@ document.addEventListener("DOMContentLoaded", () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = await res.json();
 
+      // First check if response is OK
       if (!res.ok) {
-        throw new Error(data.error || "Failed to fetch total");
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
+
+      // Try to parse JSON
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        throw new Error("Invalid JSON response");
+      }
+
+      // Safely extract total amount
+      const totalAmount = parseFloat(data?.total) || 0;
+
+      // Update UI
       const totalExpenseValue = document.getElementById("total-expense-value");
       if (totalExpenseValue) {
-        totalExpenseValue.textContent = `€${Number(data.total).toFixed(2)}`;
+        totalExpenseValue.textContent = `€${totalAmount.toFixed(2)}`;
       }
+
+      // Update budget progress if elements exist
+      const budgetProgress = document.getElementById("budgetProgress");
+      const budgetText = document.getElementById("budgetText");
+      if (budgetProgress && budgetText) {
+        const budget = 300; // Your budget value
+        const percentage = Math.min((totalAmount / budget) * 100, 100);
+        budgetProgress.style.width = `${percentage}%`;
+        budgetText.textContent = `€${totalAmount.toFixed(
+          2
+        )} of €${budget.toFixed(2)} budget`;
+      }
+
+      return totalAmount;
     } catch (error) {
-      showMessage("Network error - please check connection", "danger");
-      console.error("Fetch error:", error);
-      throw error; // Keep to maintain error propagation
+      console.error("Failed to fetch total expenses:", error);
+      showMessage("Error loading expense data", "danger");
+      return 0; // Return default value
     }
   }
   // ------------------ ADD EXPENSE ------------------
@@ -543,10 +952,46 @@ window.logout = () => {
   showMessage("Logged out successfully", "success");
 };
 function showMessage(text, type) {
-  const messageEl = document.getElementById("message");
-  messageEl.textContent = text;
-  messageEl.className = `alert alert-${type} d-block`;
-  setTimeout(() => messageEl.classList.add("d-none"), 3000);
+  const toastContainer = document.getElementById("toastContainer");
+
+  // Create toast element
+  const toastEl = document.createElement("div");
+  toastEl.className = `toast show align-items-center text-white bg-${type} border-0`;
+  toastEl.setAttribute("role", "alert");
+  toastEl.setAttribute("aria-live", "assertive");
+  toastEl.setAttribute("aria-atomic", "true");
+
+  // Toast content
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="fas ${
+          type === "success"
+            ? "fa-check-circle"
+            : type === "danger"
+            ? "fa-exclamation-circle"
+            : "fa-info-circle"
+        } me-2"></i>
+        ${text}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+
+  // Add to container
+  toastContainer.appendChild(toastEl);
+
+  // Initialize Bootstrap toast
+  const toast = new bootstrap.Toast(toastEl, {
+    autohide: true,
+    delay: 3000,
+  });
+  toast.show();
+
+  // Remove after hide
+  toastEl.addEventListener("hidden.bs.toast", () => {
+    toastEl.remove();
+  });
 }
 function showLoading(show = true) {
   const loader = document.getElementById("loader");

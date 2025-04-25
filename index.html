@@ -13,19 +13,68 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <!-- Add Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <link rel="stylesheet" href="css/styles.css" />
   </head>
-  <body>
+  <body class="auth-page">
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
-        <!-- Authentication Buttons Container -->
-        <div class="d-flex justify-content-end w-100" id="authButtons">
-          <!-- Default state: Login/Signup buttons will be injected here -->
-          <!--<button class="btn btn-danger d-none" id="logoutBtn">Logout</button>-->
+        <a class="navbar-brand" href="#">
+          <i class="fas fa-chart-pie me-2"></i>ExpenseTracker
+        </a>
+        <div class="d-flex" id="authButtons">
+          <!-- Default state will be injected here -->
+          <button class="btn btn-danger d-none" id="logoutBtn">Logout</button>
         </div>
       </div>
     </nav>
+
+    <!-- Hero Section (only visible when not authenticated) -->
+    <div class="hero-section" id="heroSection">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-lg-6">
+            <div class="hero-content">
+              <h1>Take Control of Your Finances</h1>
+              <p class="lead">
+                Visualize, track, and optimize your expenses with our intuitive
+                dashboard.
+              </p>
+              <div class="d-flex gap-3 mt-4">
+                <button
+                  class="btn btn-primary btn-lg"
+                  data-bs-toggle="modal"
+                  data-bs-target="#signupModal"
+                >
+                  Get Started
+                </button>
+                <button
+                  class="btn btn-outline-light btn-lg"
+                  data-bs-toggle="modal"
+                  data-bs-target="#loginModal"
+                >
+                  Login
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6 d-none d-lg-block">
+            <div class="hero-image">
+              <img
+                src="https://illustrations.popsy.co/amber/digital-nomad.svg"
+                alt="Financial dashboard illustration"
+                class="img-fluid"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Authentication Modals -->
     <!-- Login Modal -->
@@ -33,15 +82,13 @@
       class="modal fade"
       id="loginModal"
       tabindex="-1"
-      role="dialog"
       aria-labelledby="loginModalLabel"
+      aria-hidden="true"
     >
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="loginModalLabel">
-              Login to Your Account
-            </h5>
+          <div class="modal-header border-0">
+            <h5 class="modal-title" id="loginModalLabel">Welcome Back</h5>
             <button
               type="button"
               class="btn-close"
@@ -49,32 +96,60 @@
               aria-label="Close"
             ></button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body px-4 pb-4 pt-0">
             <form id="loginForm" role="form">
               <div class="mb-3">
                 <label for="loginEmail" class="form-label">Email Address</label>
-                <input
-                  type="email"
-                  class="form-control"
-                  id="loginEmail"
-                  required
-                  placeholder="Enter your email"
-                />
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-envelope"></i
+                  ></span>
+                  <input
+                    type="email"
+                    class="form-control"
+                    id="loginEmail"
+                    required
+                    placeholder="Enter your email"
+                  />
+                </div>
               </div>
               <div class="mb-3">
                 <label for="loginPassword" class="form-label">Password</label>
-                <input
-                  type="password"
-                  class="form-control"
-                  id="loginPassword"
-                  required
-                  placeholder="Enter your password"
-                />
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-lock"></i
+                  ></span>
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="loginPassword"
+                    required
+                    placeholder="Enter your password"
+                  />
+                </div>
+                <div class="text-end mt-2">
+                  <a href="#" class="text-decoration-none small"
+                    >Forgot password?</a
+                  >
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary w-100">
-                Sign In
+              <button type="submit" class="btn btn-primary w-100 py-2">
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
               </button>
             </form>
+            <div class="text-center mt-3">
+              <p class="mb-0">
+                Don't have an account?
+                <a
+                  href="#"
+                  class="text-decoration-none"
+                  data-bs-toggle="modal"
+                  data-bs-target="#signupModal"
+                  data-bs-dismiss="modal"
+                  >Sign up</a
+                >
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -85,15 +160,13 @@
       class="modal fade"
       id="signupModal"
       tabindex="-1"
-      role="dialog"
       aria-labelledby="signupModalLabel"
+      aria-hidden="true"
     >
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="signupModalLabel">
-              Create New Account
-            </h5>
+          <div class="modal-header border-0">
+            <h5 class="modal-title" id="signupModalLabel">Create Account</h5>
             <button
               type="button"
               class="btn-close"
@@ -101,146 +174,297 @@
               aria-label="Close"
             ></button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body px-4 pb-4 pt-0">
             <form id="signupForm" role="form">
               <div class="mb-3">
                 <label for="signupEmail" class="form-label"
                   >Email Address</label
                 >
-                <input
-                  type="email"
-                  class="form-control"
-                  id="signupEmail"
-                  required
-                  placeholder="Enter your email"
-                />
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-envelope"></i
+                  ></span>
+                  <input
+                    type="email"
+                    class="form-control"
+                    id="signupEmail"
+                    required
+                    placeholder="Enter your email"
+                  />
+                </div>
               </div>
               <div class="mb-3">
                 <label for="signupPassword" class="form-label">Password</label>
-                <input
-                  type="password"
-                  class="form-control"
-                  id="signupPassword"
-                  autocomplete="new-password"
-                  required
-                  placeholder="Create a password"
-                />
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-lock"></i
+                  ></span>
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="signupPassword"
+                    autocomplete="new-password"
+                    required
+                    placeholder="Create a password"
+                  />
+                </div>
+                <div class="password-strength mt-2">
+                  <div class="progress" style="height: 5px">
+                    <div
+                      class="progress-bar"
+                      role="progressbar"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <small class="text-muted"
+                    >Password strength:
+                    <span id="strengthText">Weak</span></small
+                  >
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary w-100">
-                Create Account
+              <div class="form-check mb-3">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="termsCheck"
+                  required
+                />
+                <label class="form-check-label small" for="termsCheck">
+                  I agree to the
+                  <a href="#" class="text-decoration-none">Terms of Service</a>
+                  and
+                  <a href="#" class="text-decoration-none">Privacy Policy</a>
+                </label>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-2">
+                <i class="fas fa-user-plus me-2"></i>Create Account
               </button>
             </form>
+            <div class="text-center mt-3">
+              <p class="mb-0">
+                Already have an account?
+                <a
+                  href="#"
+                  class="text-decoration-none"
+                  data-bs-toggle="modal"
+                  data-bs-target="#loginModal"
+                  data-bs-dismiss="modal"
+                  >Login</a
+                >
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Main Content (Visible only when authenticated) -->
-    <main class="container mt-5 d-none" id="mainContent">
+    <main class="container-fluid px-4 py-3 d-none" id="mainContent">
+      <!-- Toast Notification Container -->
+      <div
+        id="toastContainer"
+        class="position-fixed top-0 end-0 p-3"
+        style="z-index: 1100"
+      ></div>
+
       <!-- Header -->
-      <h1 class="text-center mb-4">Expense Tracker</h1>
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+          <i class="fas fa-chart-pie me-2 text-primary"></i>Expense Dashboard
+        </h1>
+        <div class="d-flex align-items-center">
+          <span class="me-3 text-muted"
+            >Welcome, <span id="userEmailDisplay"></span
+          ></span>
+        </div>
+      </div>
 
       <!-- Expense Management Section -->
       <section aria-labelledby="expenseSectionHeading">
-        <h2 id="expenseSectionHeading" class="visually-hidden">
-          Expense Management
-        </h2>
-
-        <!-- Add Expense Card -->
-        <div class="card p-3 mb-4">
-          <div class="card-body">
-            <h3 class="card-title mb-4">Add New Expense</h3>
-            <form id="expenseForm" class="needs-validation" novalidate>
-              <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <input
-                  type="text"
-                  id="expenseDescription"
-                  class="form-control"
-                  required
-                  placeholder="Enter expense description"
-                />
-                <div class="invalid-feedback">Please enter a description</div>
+        <div class="row">
+          <!-- Add Expense Card -->
+          <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <h3 class="card-title mb-4 d-flex align-items-center">
+                  <i class="fas fa-plus-circle me-2 text-primary"></i>Add New
+                  Expense
+                </h3>
+                <form id="expenseForm" class="needs-validation" novalidate>
+                  <div class="mb-3">
+                    <label for="description" class="form-label"
+                      >Description</label
+                    >
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="fas fa-pen"></i
+                      ></span>
+                      <input
+                        type="text"
+                        id="expenseDescription"
+                        class="form-control"
+                        required
+                        placeholder="Enter expense description"
+                      />
+                    </div>
+                    <div class="invalid-feedback">
+                      Please enter a description
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="amount" class="form-label">Amount (€)</label>
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="fas fa-euro-sign"></i
+                      ></span>
+                      <input
+                        type="number"
+                        id="expenseAmount"
+                        class="form-control"
+                        required
+                        step="0.01"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div class="invalid-feedback">
+                      Please enter a valid amount
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="category" class="form-label">Category</label>
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="fas fa-tag"></i
+                      ></span>
+                      <select id="expenseCategory" class="form-select" required>
+                        <option value="" disabled selected>
+                          Select a category
+                        </option>
+                        <option value="Food">Food</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div class="invalid-feedback">Please select a category</div>
+                  </div>
+                  <button type="submit" class="btn btn-primary w-100 py-2">
+                    <i class="fas fa-plus me-2"></i>Add Expense
+                  </button>
+                </form>
               </div>
-              <div class="mb-3">
-                <label for="amount" class="form-label">Amount (€)</label>
-                <input
-                  type="number"
-                  id="expenseAmount"
-                  class="form-control"
-                  required
-                  step="0.01"
-                  placeholder="0.00"
-                />
-                <div class="invalid-feedback">Please enter a valid amount</div>
-              </div>
-              <div class="mb-3">
-                <label for="category" class="form-label">Category</label>
-                <select id="expenseCategory" class="form-select" required>
-                  <option value="" disabled selected>Select a category</option>
-                  <option value="Food">Food</option>
-                  <option value="Transport">Transport</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Other">Other</option>
-                </select>
-                <div class="invalid-feedback">Please select a category</div>
-              </div>
-              <button type="submit" class="btn btn-primary w-100">
-                Add Expense
-              </button>
-            </form>
+            </div>
           </div>
-        </div>
 
-        <!-- System Messages -->
-        <div
-          id="message"
-          class="alert alert-success mt-3 d-none"
-          role="alert"
-        ></div>
-
-        <!-- Total Expenses Display -->
-        <div
-          id="total-expense-card"
-          class="card text-white bg-danger mb-4 shadow"
-          style="max-width: 400px; margin: auto"
-        >
-          <div
-            class="card-body d-flex justify-content-between align-items-center"
-          >
-            <h5 class="card-title mb-0">Total Expense</h5>
-            <h3 id="total-expense-value" class="mb-0">€0.00</h3>
+          <!-- Total Expenses Card -->
+          <div class="col-lg-6 mb-4">
+            <div class="card total-expense-card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h3 class="card-title text-white mb-1">Total Expenses</h3>
+                    <p class="text-white-50 mb-0">All time spending</p>
+                  </div>
+                  <div
+                    class="display-4 text-white fw-bold"
+                    id="total-expense-value"
+                  >
+                    €0.00
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <div class="progress" style="height: 8px">
+                    <div
+                      class="progress-bar bg-white"
+                      role="progressbar"
+                      style="width: 0%"
+                      id="budgetProgress"
+                    ></div>
+                  </div>
+                  <small class="text-white-50" id="budgetText"
+                    >No budget set</small
+                  >
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- Data Visualization Section -->
-      <section aria-labelledby="visualizationHeading" class="mt-5">
-        <div class="card p-3">
+      <section aria-labelledby="visualizationHeading" class="mt-4">
+        <div class="card border-0 shadow-sm">
           <div class="card-body">
             <h3 class="card-title text-center mb-4" id="visualizationHeading">
-              Category Breakdown
+              <i class="fas fa-chart-bar me-2"></i>Expense Analysis
             </h3>
-            <div class="row justify-content-center">
+
+            <!-- Chart Row 1 -->
+            <div class="row mb-4">
+              <div class="col-md-6 mb-4 mb-md-0">
+                <div
+                  class="chart-container"
+                  style="position: relative; height: 300px"
+                >
+                  <canvas
+                    id="pieChartCanvas"
+                    aria-label="Expense category distribution chart"
+                  ></canvas>
+                </div>
+              </div>
               <div class="col-md-6">
-                <canvas
-                  id="chartCanvas"
-                  class="w-100"
-                  style="height: auto"
-                  tabindex="-1"
-                  aria-label="Expense category distribution chart"
-                ></canvas>
+                <div
+                  class="chart-container"
+                  style="position: relative; height: 300px"
+                >
+                  <canvas
+                    id="doughnutChartCanvas"
+                    aria-label="Expense category doughnut chart"
+                  ></canvas>
+                </div>
               </div>
             </div>
+
+            <!-- Chart Row 2 -->
+            <div class="row">
+              <div class="col-md-6 mb-4 mb-md-0">
+                <div
+                  class="chart-container"
+                  style="position: relative; height: 300px"
+                >
+                  <canvas
+                    id="barChartCanvas"
+                    aria-label="Expense category bar chart"
+                  ></canvas>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div
+                  class="chart-container"
+                  style="position: relative; height: 300px"
+                >
+                  <canvas
+                    id="polarAreaChartCanvas"
+                    aria-label="Expense category polar area chart"
+                  ></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Table -->
             <div class="mt-4">
-              <table class="table" aria-describedby="categorySummaryTableDesc">
+              <table
+                class="table table-hover align-middle"
+                aria-describedby="categorySummaryTableDesc"
+              >
                 <caption id="categorySummaryTableDesc" class="visually-hidden">
                   Detailed breakdown of expenses by category
                 </caption>
-                <thead>
+                <thead class="table-light">
                   <tr>
                     <th scope="col">Category</th>
                     <th scope="col">Total (€)</th>
+                    <th scope="col">Percentage</th>
                   </tr>
                 </thead>
                 <tbody id="category-summary"></tbody>
@@ -249,50 +473,61 @@
           </div>
         </div>
       </section>
-      <!-- Expense List Section -->
-      <section aria-labelledby="expenseListHeading" class="mt-5">
-        <div class="card p-3">
-          <div class="card-body">
-            <!-- 🔽 INSERT FILTER SECTION HERE -->
-            <div class="filters mb-3">
-              <select id="filter-category" class="form-select">
-                <option value="">All Categories</option>
-                <option value="Food">Food</option>
-                <option value="Transport">Transport</option>
-                <option value="Shopping">Shopping</option>
-                <option value="Other">Other</option>
-                <!-- Add other categories -->
-              </select>
 
-              <input
-                type="date"
-                id="filter-start-date"
-                class="form-control mt-2"
-              />
-              <input
-                type="date"
-                id="filter-end-date"
-                class="form-control mt-2"
-              />
-              <button id="apply-filters" class="btn btn-primary mt-2">
-                Apply Filters
-              </button>
-            </div>
-            <!-- 🔼 END OF FILTER SECTION -->
+      <!-- Expense List Section -->
+      <section aria-labelledby="expenseListHeading" class="mt-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
             <h3 class="card-title mb-4" id="expenseListHeading">
-              Expense History
+              <i class="fas fa-history me-2"></i>Expense History
             </h3>
+
+            <!-- Filters -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label for="filter-category" class="form-label">Category</label>
+                <select id="filter-category" class="form-select">
+                  <option value="">All Categories</option>
+                  <option value="Food">Food</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="filter-start-date" class="form-label">From</label>
+                <input
+                  type="date"
+                  id="filter-start-date"
+                  class="form-control"
+                />
+              </div>
+              <div class="col-md-3">
+                <label for="filter-end-date" class="form-label">To</label>
+                <input type="date" id="filter-end-date" class="form-control" />
+              </div>
+              <div class="col-md-3 d-flex align-items-end">
+                <button id="apply-filters" class="btn btn-primary w-100">
+                  <i class="fas fa-filter me-2"></i>Apply
+                </button>
+              </div>
+            </div>
+
             <div class="table-responsive">
-              <table class="table" aria-describedby="expenseListDesc">
+              <table
+                class="table table-hover align-middle"
+                aria-describedby="expenseListDesc"
+              >
                 <caption id="expenseListDesc" class="visually-hidden">
                   List of all recorded expenses
                 </caption>
-                <thead>
+                <thead class="table-light">
                   <tr>
                     <th scope="col">Description</th>
                     <th scope="col">Amount (€)</th>
                     <th scope="col">Category</th>
-                    <th scope="col">Actions</th>
+                    <th scope="col">Date</th>
+                    <th scope="col" class="text-end">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="expenseList"></tbody>
