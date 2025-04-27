@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
+    // Clear previous error states
+    document.getElementById("loginEmail").classList.remove("is-invalid");
+    document.getElementById("loginPassword").classList.remove("is-invalid");
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
@@ -24,20 +27,37 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        setTimeout(checkAuthState, 0);
-        showMessage("Login successful!", "success");
-        document.getElementById("loginForm").reset();
-        const modal = bootstrap.Modal.getInstance(
-          document.getElementById("loginModal")
+      if (!response.ok) {
+        // Highlight the problematic field based on error type
+        if (data.message && data.message.includes("password")) {
+          document.getElementById("loginPassword").classList.add("is-invalid");
+        } else if (
+          (data.message && data.message.includes("email")) ||
+          (data.message && data.message.includes("account"))
+        ) {
+          document.getElementById("loginEmail").classList.add("is-invalid");
+        }
+
+        showMessage(
+          data.message || data.error || "Invalid email or password",
+          "danger"
         );
-        if (modal) modal.hide(); // <-- Add null check here
-        const mainContent = document.getElementById("chartCanvas");
-        if (mainContent) mainContent.focus();
-      } else {
-        showMessage(data.error || "Login failed", "danger");
+        return;
       }
+
+      // Login successful
+      localStorage.setItem("token", data.token);
+      setTimeout(checkAuthState, 0);
+      showMessage("Login successful!", "success");
+      document.getElementById("loginForm").reset();
+
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById("loginModal")
+      );
+      if (modal) modal.hide();
+
+      const mainContent = document.getElementById("chartCanvas");
+      if (mainContent) mainContent.focus();
     } catch (error) {
       showMessage("Network error - please try again later", "danger");
     }
@@ -48,6 +68,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = document.getElementById("signupEmail").value;
     const password = document.getElementById("signupPassword").value;
 
+    // Clear previous errors
+    document.getElementById("signupEmail").classList.remove("is-invalid");
+
     try {
       const response = await fetch(`${API_URL}/auth/signup`, {
         method: "POST",
@@ -56,17 +79,23 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        checkAuthState();
-        showMessage("Signup successful!", "success");
-        document.getElementById("signupForm").reset();
-        bootstrap.Modal.getInstance(
-          document.getElementById("signupModal")
-        ).hide();
-      } else {
+      if (!response.ok) {
+        // Highlight email field if email exists
+        if (data.error && data.error.includes("Email")) {
+          document.getElementById("signupEmail").classList.add("is-invalid");
+        }
         showMessage(data.error || "Signup failed", "danger");
+        return;
       }
+
+      // Success handling
+      localStorage.setItem("token", data.token);
+      checkAuthState();
+      showMessage("Signup successful!", "success");
+      document.getElementById("signupForm").reset();
+      bootstrap.Modal.getInstance(
+        document.getElementById("signupModal")
+      ).hide();
     } catch (error) {
       showMessage("Network error - please try again later", "danger");
     }
@@ -193,9 +222,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (filters.startDate) query.append("startDate", filters.startDate);
       if (filters.endDate) query.append("endDate", filters.endDate);
 
-      /*const url = `${API_URL}/expenses${
-        query.toString() ? `?${query.toString()}` : ""
-      }`;*/
       const endpoint = query.toString() ? "/expenses/filter" : "/expenses";
       const url = `${API_URL}${endpoint}?${query.toString()}`;
 
